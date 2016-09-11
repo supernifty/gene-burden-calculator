@@ -52,18 +52,22 @@ body {
       <div>
         <h1>Burden Calculation Results</h1>
 
+        <div class="alert alert-success" role="alert">Showing results with <strong>{{ filter_type }} &ge; {{ filter_value }}</strong></div>
+
         <table id="table_result" class="display">
           <thead>
             <tr>
               <th>Gene</th>
-              <th>Count</th>
+              <th>Burden</th>
+              <th>Matches</th>
             </tr>
           </thead>
           <tbody>
             {% for item in result %}
             <tr>
               <td>{{ item.gene }}</td>
-              <td>{{ item.count }}</td>
+              <td>{{ item.burden }}</td>
+              <td>{{ item.matches }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -71,7 +75,7 @@ body {
       </div>
 
       <div>
-        <a href="/">Back</a>
+        <a href="/">Start Over</a>
       </div>
     </div><!-- /.container -->
 
