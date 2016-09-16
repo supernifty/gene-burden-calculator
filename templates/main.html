@@ -49,34 +49,50 @@ body {
 
       <div>
         <h1>Burden Calculation Configuration</h1>
-{% if error %}
+{% if errors %}
         <div class="alert alert-danger">
-          <strong>Error:</strong> {{ error }}
+          <ul>
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+          </ul>
         </div>
 {% endif %}
         <form method="POST" action="/">
-          <div class="form-group col-lg-4">
-            <label for="filter_type" class="control-label">Filter Type</label>
-            <select name="filter_type" class="form-control">
-              <option value='cadd'>CADD</option>
-              <option value='condel'>Condel</option>
-              <option value='sift'>Sift</option>
-              <option value='polyphen'>Polyphen</option>
-            </select>
+          <div class="row">
+            <div class="form-group col-lg-4">
+              <label for="filter_type" class="control-label">Filter Type</label>
+              <select name="filter_type" class="form-control">
+                {% for opt in ('CADD', 'Condel', 'Sift', 'Polyphen') %}
+                  <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_type) %} selected="selected" {% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group col-lg-4">
+              <label for="filter_value" class="control-label">Filter Value</label>
+              <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
+            </div>
           </div>
 
-          <div class="form-group col-lg-4">
-            <label for="filter_value" class="control-label">Filter Value</label>
-            <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value">
+          <div class="row">
+            <div class="form-group col-lg-4">
+              <label for="cases" class="control-label">Number of cases</label>
+              <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
+            </div>
           </div>
 
-          <div class="form-group col-lg-12">
-            <label for="burdens" class="control-label">Genes and Burdens</label>
-            <textarea name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'."></textarea>
+          <div class="row">
+            <div class="form-group col-lg-12">
+              <label for="burdens" class="control-label">Genes and Burdens</label>
+              <textarea name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
+            </div>
           </div>
 
-          <div class="form-group col-lg-12">
-            <button type="submit" class="btn btn-primary">Analyze...</button>
+          <div class="row">
+            <div class="form-group col-lg-12">
+              <button type="submit" class="btn btn-primary">Analyze...</button>
+            </div>
           </div>
 
         </form>

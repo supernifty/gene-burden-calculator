@@ -6,9 +6,12 @@
 import flask
 import sqlite3
 
+import calculate
+
 app = flask.Flask(__name__)
 
 DB = "./exac.db"
+EXAC_POPULATION = 106210
 
 ### database access
 def db():
@@ -34,27 +37,46 @@ def process():
     '''
         analysis
     '''
+    errors = []
     filter_type = flask.request.form['filter_type']
     if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
         flask.render_template('main.html', error='Invalid filter type')
     try:
         filter_value = float(flask.request.form['filter_value'])
     except ValueError:
-        return flask.render_template('main.html', error='Invalid filter value')
+        errors.append('Filter value must be numeric')
+
+    try:
+        cases = int(flask.request.form['cases'])
+    except ValueError:
+        errors.append('Number of cases must be numeric')
 
     burdens = flask.request.form['burdens'].split('\n')
+
     result = []
     for line, burden in enumerate(burdens):
         fields = burden.strip().split(',')
         if len(fields) != 2:
-            return flask.render_template('main.html', error='Incorrect burden format on line {}'.format(line))
+            errors.append('Incorrect burden format on line {}'.format(line + 1))
+            continue
+
+        try:
+            case_burden = float(fields[1])
+        except ValueError:
+            errors.append('Incorrect burden format on line {}'.format(line + 1))
+            continue
 
         # find matching genes
-        matches = query_db("select count(*) from exac where gene = ? and {} >= ?".format(filter_type), [fields[0], filter_value], one=True)[0]
+        matches = query_db("select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ?".format(filter_type), 
+                           [fields[0], filter_value], one=True)
         
-        result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches})
+        statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
+        result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], 'z_test': statistics[0], 'binomial_test': statistics[1]})
 
-    return flask.render_template('results.html', result=result, filter_type=filter_type, filter_value=filter_value)
+    if len(errors) == 0:
+        return flask.render_template('results.html', result=result, filter_type=filter_type, filter_value=filter_value, cases=cases)
+    else:
+        return flask.render_template('main.html', errors=errors, form=flask.request.form)
 
 ### front end
 @app.route('/', methods=['GET', 'POST'])
@@ -65,7 +87,7 @@ def main():
     if flask.request.method == 'POST':
         return process()
     else:
-        return flask.render_template('main.html')
+        return flask.render_template('main.html', form=flask.request.form)
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')

@@ -52,7 +52,7 @@ body {
       <div>
         <h1>Burden Calculation Results</h1>
 
-        <div class="alert alert-success" role="alert">Showing results with <strong>{{ filter_type }} &ge; {{ filter_value }}</strong></div>
+        <div class="alert alert-success" role="alert">Showing results with <strong>{{ filter_type }} &ge; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.</div>
 
         <table id="table_result" class="display">
           <thead>
@@ -60,6 +60,9 @@ body {
               <th>Gene</th>
               <th>Burden</th>
               <th>Matches</th>
+              <th>Protein Length</th>
+              <th>Z test p-value</th>
+              <th>Binomial test p-value</th>
             </tr>
           </thead>
           <tbody>
@@ -68,6 +71,9 @@ body {
               <td>{{ item.gene }}</td>
               <td>{{ item.burden }}</td>
               <td>{{ item.matches }}</td>
+              <td>{{ item.protein_length }}</td>
+              <td>{{ '{0:0.3E}'.format(item.z_test) }}</td>
+              <td>{{ '{0:0.3E}'.format(item.binomial_test) }}</td>
             </tr>
             {% endfor %}
           </tbody>
