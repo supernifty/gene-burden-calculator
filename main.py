@@ -54,6 +54,7 @@ def process():
     burdens = flask.request.form['burdens'].split('\n')
 
     result = []
+    warnings = []
     for line, burden in enumerate(burdens):
         fields = burden.strip().split(',')
         if len(fields) != 2:
@@ -70,11 +71,24 @@ def process():
         matches = query_db("select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ?".format(filter_type), 
                            [fields[0], filter_value], one=True)
         
-        statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
-        result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], 'z_test': statistics[0], 'binomial_test': statistics[1]})
+        if matches[1] is not None:
+            statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
+            result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], 'z_test': statistics[0], 'binomial_test': statistics[1]})
+        else:
+            # gene is no good
+            warnings.append( 'Gene "{}" not found'.format(fields[0]))
 
     if len(errors) == 0:
-        return flask.render_template('results.html', result=result, filter_type=filter_type, filter_value=filter_value, cases=cases)
+        return flask.render_template('results.html', 
+            result=result, 
+            filter_type=filter_type, 
+            filter_value=filter_value, 
+            cases=cases,
+            gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
+            protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
+            binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
+            warnings = warnings
+        )
     else:
         return flask.render_template('main.html', errors=errors, form=flask.request.form)
 
@@ -90,5 +104,5 @@ def main():
         return flask.render_template('main.html', form=flask.request.form)
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=False,host='0.0.0.0')
 

@@ -62,7 +62,7 @@ body {
           <div class="row">
             <div class="form-group col-lg-4">
               <label for="filter_type" class="control-label">Filter Type</label>
-              <select name="filter_type" class="form-control">
+              <select id="filter_type" name="filter_type" class="form-control">
                 {% for opt in ('CADD', 'Condel', 'Sift', 'Polyphen') %}
                   <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_type) %} selected="selected" {% endif %}>{{ opt }}</option>
                 {% endfor %}
@@ -85,13 +85,14 @@ body {
           <div class="row">
             <div class="form-group col-lg-12">
               <label for="burdens" class="control-label">Genes and Burdens</label>
-              <textarea name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
+              <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-12">
               <button type="submit" class="btn btn-primary">Analyze...</button>
+              <button type="button" class="btn btn-link" id="prepopulate_btn">Use prepopulated example</button>
             </div>
           </div>
 
@@ -105,5 +106,14 @@ body {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <script>
+      $('#prepopulate_btn').on('click', function (e) {
+        $('#filter_type').val('condel');
+        $('#filter_value').val('0.5');
+        $('#cases').val('100');
+        $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
+      })
+    </script>
   </body>
 </html>

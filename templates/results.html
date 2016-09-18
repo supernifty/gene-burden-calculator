@@ -53,6 +53,15 @@ body {
         <h1>Burden Calculation Results</h1>
 
         <div class="alert alert-success" role="alert">Showing results with <strong>{{ filter_type }} &ge; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.</div>
+{% if warnings %}
+        <div class="alert alert-warning">
+          <ul>
+          {% for warning in warnings %}
+            <li>{{ warning }}</li>
+          {% endfor %}
+          </ul>
+        </div>
+{% endif %}
 
         <table id="table_result" class="display">
           <thead>
@@ -72,12 +81,16 @@ body {
               <td>{{ item.burden }}</td>
               <td>{{ item.matches }}</td>
               <td>{{ item.protein_length }}</td>
-              <td>{{ '{0:0.3E}'.format(item.z_test) }}</td>
-              <td>{{ '{0:0.3E}'.format(item.binomial_test) }}</td>
+              <td>{{ '{0:0.3e}'.format(item.z_test) }}</td>
+              <td>{{ '{0:0.3e}'.format(item.binomial_test) }}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
+      </div>
+
+      <div>
+        <div id="protein_binomial" style="width:800px;height:600px;"></div>
       </div>
 
       <div>
@@ -91,9 +104,24 @@ body {
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.12/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
     <script>
-$(document).ready( function () {
+$(document).ready(function () {
     $('#table_result').DataTable();
+        data = [{
+            x: [ {{ protein_lengths }} ],
+            y: [ {{ binomial_pvalues }} ],
+            mode: 'markers',
+            type: 'scatter',
+            text: [ {{ gene_list|safe }} ],
+            marker: { size: 12 } }]
+        layout = {
+            yaxis: { type: 'log', autorange: true, title: 'p-value', tickformat: 'e', hoverformat: '.3e' },
+            xaxis: { type: 'log', autorange: true, title: 'Protein Length' },
+            title: 'Protein Length vs Binomial p-value'
+        };
+        Plotly.plot("protein_binomial", data, layout);
 } );
     </script>
   </body>
