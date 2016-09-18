@@ -117,7 +117,7 @@ $(document).ready(function () {
             text: [ {{ gene_list|safe }} ],
             marker: { size: 12 } }]
         layout = {
-            yaxis: { type: 'log', autorange: true, title: 'p-value', tickformat: 'e', hoverformat: '.3e' },
+            yaxis: { type: 'log', autorange: true, title: 'p-value', tickformat: '.0e', hoverformat: '.3e' },
             xaxis: { type: 'log', autorange: true, title: 'Protein Length' },
             title: 'Protein Length vs Binomial p-value'
         };

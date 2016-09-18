@@ -76,7 +76,7 @@ def process():
             result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], 'z_test': statistics[0], 'binomial_test': statistics[1]})
         else:
             # gene is no good
-            warnings.append( 'Gene "{}" not found'.format(fields[0]))
+            warnings.append( 'Gene "{}" had no matches'.format(fields[0]))
 
     if len(errors) == 0:
         return flask.render_template('results.html', 
