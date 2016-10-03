@@ -10,7 +10,7 @@ import calculate
 
 app = flask.Flask(__name__)
 
-DB = "./exac.db"
+DB = "./exac2.db"
 EXAC_POPULATION = 106210
 
 ### database access
