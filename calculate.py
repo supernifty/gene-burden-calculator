@@ -31,9 +31,11 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     '''
     case_proportion = 1.0 * case_burden / total_cases
     population_proportion = 1.0 * population_burden / total_population
+    #print("case_burden {} total_cases {} pop_burden {} total_pop {}".format(case_burden, total_cases, population_burden, total_population))
 
     # z proportion test
     psp = ((case_proportion * total_cases) + (population_proportion * total_population)) / (total_cases + total_population)
+    #print("psp {} total cases {} total pop {}".format(psp, total_cases, total_population))
     standard_error = math.sqrt(psp * (1.0 - psp) * (1.0 / total_cases + 1.0 / total_population))
     z_score = (case_proportion - population_proportion) / standard_error
 

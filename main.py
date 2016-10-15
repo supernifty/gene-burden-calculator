@@ -38,6 +38,8 @@ def process():
         analysis
     '''
     errors = []
+
+    # parse overall settings - filtering
     filter_type = flask.request.form['filter_type']
     if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
         flask.render_template('main.html', errors=['Invalid filter type'])
@@ -46,8 +48,15 @@ def process():
     except ValueError:
         errors.append('Filter value must be numeric')
 
+    # filter options
+    include_high_impact = flask.request.form.get('filter_option_high_impact') is not None
+    exclude_splice = flask.request.form.get('filter_option_splice') is not None
+
+    # case count
     try:
         cases = int(flask.request.form['cases'])
+        if cases <= 0:
+            errors.append('Number of cases must be greater than zero')
     except ValueError:
         errors.append('Number of cases must be numeric')
 
@@ -63,13 +72,30 @@ def process():
 
         try:
             case_burden = float(fields[1])
+            if case_burden <= 0:
+                errors.append('Incorrect burden format on line {}: burden count {} is less than 0'.format(line + 1, fields[1]))
+                continue
         except ValueError:
-            errors.append('Incorrect burden format on line {}'.format(line + 1))
+            errors.append('Incorrect burden format on line {}: burden count "{}" is not numeric'.format(line + 1, fields[1]))
             continue
 
+        # additional
+        additional_filter = ''
+        if include_high_impact:
+            additional_filter += " or (impact_type = 'HIGH' and (impact = 'stop_gained' or impact = 'frameshift_variant'))"
+        if exclude_splice:
+            additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
+
         # find matching genes
-        matches = query_db("select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ?".format(filter_type), 
-                           [fields[0], filter_value], one=True)
+        matches = query_db(
+            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? {})".format(
+                filter_type, 
+                additional_filter), 
+                [
+                   fields[0], 
+                   filter_value
+                ], 
+                one=True)
         
         if matches[1] is not None:
             statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
@@ -84,6 +110,8 @@ def process():
             filter_type=filter_type, 
             filter_value=filter_value, 
             cases=cases,
+            include_high_impact=include_high_impact,
+            exclude_splice=exclude_splice,
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
@@ -99,6 +127,7 @@ def main():
         main entry point
     '''
     if flask.request.method == 'POST':
+        print("in post")
         return process()
     else:
         return flask.render_template('main.html', form=flask.request.form)

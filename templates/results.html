@@ -52,7 +52,11 @@ body {
       <div>
         <h1>Burden Calculation Results</h1>
 
-        <div class="alert alert-success" role="alert">Showing results with <strong>{{ filter_type }} &ge; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.</div>
+        <div class="alert alert-success" role="alert">
+            Showing results with <strong>{{ filter_type }} &ge; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.
+            {% if include_high_impact %}Included high impact variants.{% endif %}
+            {% if exclude_splice %}Excluded splice variants.{% endif %}
+        </div>
 {% if warnings %}
         <div class="alert alert-warning">
           <ul>

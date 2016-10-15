@@ -26,6 +26,8 @@ def main(db_file, exac_files, protein_lengths):
         #db.execute('''CREATE TABLE if not exists exac (gene text, impact text, impact_type text, allele_count int, total_alleles int, exac_aaf real, cadd read, condel real, sift real, polyphen real)''')
         db.execute('''CREATE TABLE if not exists exac (gene text, impact text, impact_type text, allele_count int, total_alleles int, exac_all real, exac_african real, exac_latino real, exac_east_asian real, exac_fin real, exac_nonfin_eur real, exac_south_asian real, exac_other real, cadd read, condel real, sift real, polyphen real)''')
         db.execute('''CREATE INDEX if not exists exac_gene ON exac(gene)''')
+        db.execute('''CREATE INDEX if not exists exac_impact ON exac(impact)''')
+        db.execute('''CREATE INDEX if not exists exac_impact_type ON exac(impact_type)''')
     
         # exac
         for src_file in exac_files:

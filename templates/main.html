@@ -19,6 +19,10 @@
 body {
   padding-top: 50px;
 }
+
+.checkbox {
+  margin-top: 0;
+}
     </style>
 
   </head>
@@ -73,7 +77,20 @@ body {
               <label for="filter_value" class="control-label">Filter Value</label>
               <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
             </div>
-          </div>
+
+            <div class="form-group col-lg-4">
+              <label for="filter_option_high_impact" class="control-label">Filter Options</label>
+              <div class="checkbox">
+                <label><input type="checkbox" id="filter_option_high_impact" name="filter_option_high_impact" {% if form.get('filter_option_high_impact') %}checked{% endif %}>
+                  Include high impact
+                </label>
+              </div>
+              <div class="checkbox">
+                <label><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
+              </div>
+            </div>
+
+           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
