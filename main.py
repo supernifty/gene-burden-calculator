@@ -40,7 +40,7 @@ def process():
     errors = []
     filter_type = flask.request.form['filter_type']
     if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
-        flask.render_template('main.html', error='Invalid filter type')
+        flask.render_template('main.html', errors=['Invalid filter type'])
     try:
         filter_value = float(flask.request.form['filter_value'])
     except ValueError:
