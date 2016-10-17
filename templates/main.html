@@ -53,7 +53,7 @@ body {
 
       <div>
         <h1>Burden Calculation Configuration</h1>
-{% if errors %}
+        {% if errors %}
         <div class="alert alert-danger">
           <ul>
           {% for error in errors %}
@@ -61,8 +61,16 @@ body {
           {% endfor %}
           </ul>
         </div>
-{% endif %}
+        {% endif %}
+
         <form method="POST" action="/">
+          <div class="row">
+            <div class="form-group col-lg-4">
+              <label for="cases" class="control-label">Number of cases</label>
+              <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
+            </div>
+          </div>
+
           <div class="row">
             <div class="form-group col-lg-4">
               <label for="filter_type" class="control-label">Filter Type</label>
@@ -77,7 +85,25 @@ body {
               <label for="filter_value" class="control-label">Filter Value</label>
               <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
             </div>
+          </div>
 
+          <div class="row">
+            <div class="form-group col-lg-4">
+              <label for="filter_af_pop" class="control-label">Population Filter</label>
+              <select id="filter_af_pop" name="filter_af_pop" class="form-control">
+                exac_all real, exac_african real, exac_latino real, exac_east_asian real, exac_fin real, exac_nonfin_eur real, exac_south_asian real, exac_other
+                {% for opt in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other') %}
+                  <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_af_pop) %} selected="selected" {% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-lg-4">
+              <label for="filter_af_value" class="control-label">Allele Frequency Filter Value</label>
+              <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
+            </div>
+          </div>
+
+          <div class="row">
             <div class="form-group col-lg-4">
               <label for="filter_option_high_impact" class="control-label">Filter Options</label>
               <div class="checkbox">
@@ -88,29 +114,8 @@ body {
               <div class="checkbox">
                 <label><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
               </div>
-              <label for="filter_af_pop" class="control-label">ExAC allele frequency filter</label>
-              <select id="filter_af_pop" name="filter_af_pop" class="form-control">
-                exac_all real, exac_african real, exac_latino real, exac_east_asian real, exac_fin real, exac_nonfin_eur real, exac_south_asian real, exac_other
-                {% for opt in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other') %}
-                  <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_af_pop) %} selected="selected" {% endif %}>{{ opt }}</option>
-                {% endfor %}
-              </select>
-
-            </div>
-
-            <div class="form-group col-lg-4">
-              <label for="filter_af_value" class="control-label">Allele Frequency Filter Value</label>
-              <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
-            </div>
-
            </div>
-
-          <div class="row">
-            <div class="form-group col-lg-4">
-              <label for="cases" class="control-label">Number of cases</label>
-              <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
-            </div>
-          </div>
+         </div>
 
           <div class="row">
             <div class="form-group col-lg-12">
@@ -118,6 +123,7 @@ body {
               <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
             </div>
           </div>
+
 
           <div class="row">
             <div class="form-group col-lg-12">
