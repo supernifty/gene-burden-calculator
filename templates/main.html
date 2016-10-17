@@ -53,7 +53,7 @@ body {
 
       <div>
         <h1>Burden Calculation Configuration</h1>
-{% if errors %}
+        {% if errors %}
         <div class="alert alert-danger">
           <ul>
           {% for error in errors %}
@@ -61,8 +61,16 @@ body {
           {% endfor %}
           </ul>
         </div>
-{% endif %}
+        {% endif %}
+
         <form method="POST" action="/">
+          <div class="row">
+            <div class="form-group col-lg-4">
+              <label for="cases" class="control-label">Number of cases</label>
+              <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
+            </div>
+          </div>
+
           <div class="row">
             <div class="form-group col-lg-4">
               <label for="filter_type" class="control-label">Filter Type</label>
@@ -77,7 +85,25 @@ body {
               <label for="filter_value" class="control-label">Filter Value</label>
               <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
             </div>
+          </div>
 
+          <div class="row">
+            <div class="form-group col-lg-4">
+              <label for="filter_af_pop" class="control-label">Population Filter</label>
+              <select id="filter_af_pop" name="filter_af_pop" class="form-control">
+                exac_all real, exac_african real, exac_latino real, exac_east_asian real, exac_fin real, exac_nonfin_eur real, exac_south_asian real, exac_other
+                {% for opt in ('exac all', 'exac african', 'exac latino', 'exac east asian', 'exac fin', 'exac nonfin eur', 'exac south asian', 'exac other') %}
+                  <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_af_pop) %} selected="selected" {% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-lg-4">
+              <label for="filter_af_value" class="control-label">Allele Frequency Filter Value</label>
+              <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
+            </div>
+          </div>
+
+          <div class="row">
             <div class="form-group col-lg-4">
               <label for="filter_option_high_impact" class="control-label">Filter Options</label>
               <div class="checkbox">
@@ -88,16 +114,8 @@ body {
               <div class="checkbox">
                 <label><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
               </div>
-            </div>
-
            </div>
-
-          <div class="row">
-            <div class="form-group col-lg-4">
-              <label for="cases" class="control-label">Number of cases</label>
-              <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
-            </div>
-          </div>
+         </div>
 
           <div class="row">
             <div class="form-group col-lg-12">
@@ -105,6 +123,7 @@ body {
               <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
             </div>
           </div>
+
 
           <div class="row">
             <div class="form-group col-lg-12">
@@ -129,6 +148,9 @@ body {
         $('#filter_type').val('condel');
         $('#filter_value').val('0.5');
         $('#cases').val('100');
+        $('#filter_af_pop').val('exac all');
+        $('#filter_af_value').val('0.001');
+        $('#filter_option_high_impact').attr("checked", true);
         $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
       })
     </script>

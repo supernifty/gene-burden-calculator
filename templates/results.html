@@ -81,7 +81,7 @@ body {
           <tbody>
             {% for item in result %}
             <tr>
-              <td>{{ item.gene }}</td>
+              <td><a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank"">{{ item.gene }}</a></td>
               <td>{{ item.burden }}</td>
               <td>{{ item.matches }}</td>
               <td>{{ item.protein_length }}</td>

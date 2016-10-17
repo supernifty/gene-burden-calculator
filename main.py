@@ -52,6 +52,16 @@ def process():
     include_high_impact = flask.request.form.get('filter_option_high_impact') is not None
     exclude_splice = flask.request.form.get('filter_option_splice') is not None
 
+    # population filter
+    filter_af_pop_form = flask.request.form['filter_af_pop']
+    filter_af_pop = filter_af_pop_form.replace (" ", "_")
+    if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
+        flask.render_template('main.html', errors=['Invalid exac population name'])
+    try:
+        filter_af_value = float(flask.request.form['filter_af_value'])
+    except ValueError:
+        errors.append('Filter allele frequency must be numeric')
+
     # case count
     try:
         cases = int(flask.request.form['cases'])
@@ -60,6 +70,7 @@ def process():
     except ValueError:
         errors.append('Number of cases must be numeric')
 
+    # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
 
     result = []
@@ -79,6 +90,8 @@ def process():
             errors.append('Incorrect burden format on line {}: burden count "{}" is not numeric'.format(line + 1, fields[1]))
             continue
 
+        sql_parameters = [fields[0], filter_value]
+
         # additional
         additional_filter = ''
         if include_high_impact:
@@ -86,17 +99,21 @@ def process():
         if exclude_splice:
             additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
 
+        # population filter
+        population_filter = ''
+        if filter_af_pop:
+            population_filter += (" and exac.{} < ?").format(filter_af_pop)
+            sql_parameters.append(filter_af_value)
+
         # find matching genes
         matches = query_db(
-            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? {})".format(
-                filter_type, 
-                additional_filter), 
-                [
-                   fields[0], 
-                   filter_value
-                ], 
+            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? {} {})".format(
+                filter_type,
+                additional_filter,
+                population_filter),
+                sql_parameters,
                 one=True)
-        
+
         if matches[1] is not None:
             statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
             result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], 'z_test': statistics[0], 'binomial_test': statistics[1]})
@@ -105,10 +122,10 @@ def process():
             warnings.append( 'Gene "{}" had no matches'.format(fields[0]))
 
     if len(errors) == 0:
-        return flask.render_template('results.html', 
-            result=result, 
-            filter_type=filter_type, 
-            filter_value=filter_value, 
+        return flask.render_template('results.html',
+            result=result,
+            filter_type=filter_type,
+            filter_value=filter_value,
             cases=cases,
             include_high_impact=include_high_impact,
             exclude_splice=exclude_splice,
@@ -134,4 +151,3 @@ def main():
 
 if __name__ == '__main__':
     app.run(debug=False,host='0.0.0.0')
-
