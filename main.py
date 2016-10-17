@@ -53,8 +53,7 @@ def process():
     exclude_splice = flask.request.form.get('filter_option_splice') is not None
 
     # population filter
-    filter_af_pop_form = flask.request.form['filter_af_pop']
-    filter_af_pop = filter_af_pop_form.replace (" ", "_")
+    filter_af_pop = flask.request.form['filter_af_pop']
     if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
         flask.render_template('main.html', errors=['Invalid exac population name'])
     try:
