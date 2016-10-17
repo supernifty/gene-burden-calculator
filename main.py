@@ -52,9 +52,10 @@ def process():
     include_high_impact = flask.request.form.get('filter_option_high_impact') is not None
     exclude_splice = flask.request.form.get('filter_option_splice') is not None
 
-    # exac population filter
-    filter_af_pop = flask.request.form['filter_af_pop']
-    if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
+    # population filter
+    filter_af_pop_form = flask.request.form['filter_af_pop']
+    filter_af_pop = filter_af_pop_form.replace (" ", "_")
+    if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
         flask.render_template('main.html', errors=['Invalid exac population name'])
     try:
         filter_af_value = float(flask.request.form['filter_af_value'])
@@ -69,6 +70,7 @@ def process():
     except ValueError:
         errors.append('Number of cases must be numeric')
 
+    # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
 
     result = []
@@ -95,11 +97,17 @@ def process():
         if exclude_splice:
             additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
 
+        # population filter
+        population_filter = ''
+        if filter_af_pop:
+            population_filter += (" and exac.{} < {}").format(filter_af_pop, filter_af_value)
+
         # find matching genes
         matches = query_db(
-            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? {})".format(
+            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? {} {})".format(
                 filter_type,
-                additional_filter),
+                additional_filter,
+                population_filter),
                 [
                    fields[0],
                    filter_value

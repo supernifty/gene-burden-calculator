@@ -92,7 +92,7 @@ body {
               <label for="filter_af_pop" class="control-label">Population Filter</label>
               <select id="filter_af_pop" name="filter_af_pop" class="form-control">
                 exac_all real, exac_african real, exac_latino real, exac_east_asian real, exac_fin real, exac_nonfin_eur real, exac_south_asian real, exac_other
-                {% for opt in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other') %}
+                {% for opt in ('exac all', 'exac african', 'exac latino', 'exac east asian', 'exac fin', 'exac nonfin eur', 'exac south asian', 'exac other') %}
                   <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_af_pop) %} selected="selected" {% endif %}>{{ opt }}</option>
                 {% endfor %}
               </select>
@@ -148,6 +148,9 @@ body {
         $('#filter_type').val('condel');
         $('#filter_value').val('0.5');
         $('#cases').val('100');
+        $('#filter_af_pop').val('exac all');
+        $('#filter_af_value').val('0.001');
+        $('#filter_option_high_impact').attr("checked", true);
         $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
       })
     </script>
