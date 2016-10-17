@@ -90,6 +90,8 @@ def process():
             errors.append('Incorrect burden format on line {}: burden count "{}" is not numeric'.format(line + 1, fields[1]))
             continue
 
+        sql_parameters = [fields[0], filter_value]
+
         # additional
         additional_filter = ''
         if include_high_impact:
@@ -100,7 +102,8 @@ def process():
         # population filter
         population_filter = ''
         if filter_af_pop:
-            population_filter += (" and exac.{} < {}").format(filter_af_pop, filter_af_value)
+            population_filter += (" and exac.{} < ?").format(filter_af_pop)
+            sql_parameters.append(filter_af_value)
 
         # find matching genes
         matches = query_db(
@@ -108,10 +111,7 @@ def process():
                 filter_type,
                 additional_filter,
                 population_filter),
-                [
-                   fields[0],
-                   filter_value
-                ],
+                sql_parameters,
                 one=True)
 
         if matches[1] is not None:
