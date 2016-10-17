@@ -88,6 +88,19 @@ body {
               <div class="checkbox">
                 <label><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
               </div>
+              <label for="filter_af_pop" class="control-label">ExAC allele frequency filter</label>
+              <select id="filter_af_pop" name="filter_af_pop" class="form-control">
+                exac_all real, exac_african real, exac_latino real, exac_east_asian real, exac_fin real, exac_nonfin_eur real, exac_south_asian real, exac_other
+                {% for opt in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other') %}
+                  <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_af_pop) %} selected="selected" {% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+
+            </div>
+
+            <div class="form-group col-lg-4">
+              <label for="filter_af_value" class="control-label">Allele Frequency Filter Value</label>
+              <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
             </div>
 
            </div>
