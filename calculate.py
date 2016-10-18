@@ -4,7 +4,7 @@
 A tool to calculate two proportion Z-test and binomial test
 to compare frequency of deleterious variants between cases and
 expected population for example ExAC.
-The two input files contain gene variants counts for their 
+The two input files contain gene variants counts for their
 corresponding populations.
 
 <input format>
@@ -54,4 +54,3 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-

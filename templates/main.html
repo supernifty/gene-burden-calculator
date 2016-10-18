@@ -16,13 +16,13 @@
     <![endif]-->
 
     <style>
-body {
-  padding-top: 50px;
-}
+    body {
+      padding-top: 50px;
+    }
 
-.checkbox {
-  margin-top: 0;
-}
+    .checkbox {
+      margin-top: 0;
+    }
     </style>
 
   </head>
@@ -66,14 +66,14 @@ body {
         <form method="POST" action="/">
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="cases" class="control-label">Number of cases</label>
+              <label for="cases" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter number of cases (samples) in your study">Number of cases</label>
               <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_type" class="control-label">Filter Type</label>
+              <label for="filter_type" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant impact predcition method">Filter Type</label>
               <select id="filter_type" name="filter_type" class="form-control">
                 {% for opt in ('CADD', 'Condel', 'Sift', 'Polyphen') %}
                   <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_type) %} selected="selected" {% endif %}>{{ opt }}</option>
@@ -82,14 +82,14 @@ body {
             </div>
 
             <div class="form-group col-lg-4">
-              <label for="filter_value" class="control-label">Filter Value</label>
+              <label for="filter_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter score cutoff for the filter type tool selected above">Filter Value</label>
               <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_af_pop" class="control-label">Population Filter</label>
+              <label for="filter_af_pop" class="control-label" data-toggle="tooltip" data-placement="top" title="Select comparison dataset and population">Population Filter</label>
               <select id="filter_af_pop" name="filter_af_pop" class="form-control">
                 {% for display, opt in (('All', 'exac_all'), ('African/African American', 'exac_african'), ('Latino', 'exac_latino'), ('East Asian', 'exac_east_asian'), ('Finnish', 'exac_fin'), ('Non-Finnish European', 'exac_nonfin_eur'), ('South Asian', 'exac_south_asian'), ('Other', 'exac_other')) %}
                   <option value='{{ opt }}' {% if (opt == form.filter_af_pop) %} selected="selected" {% endif %}>{{ display }}</option>
@@ -97,28 +97,28 @@ body {
               </select>
             </div>
             <div class="form-group col-lg-4">
-              <label for="filter_af_value" class="control-label">Allele Frequency Filter Value</label>
+              <label for="filter_af_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter allele frequency cutoff for the dataset selected above">Allele Frequency Filter Value</label>
               <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_option_high_impact" class="control-label">Filter Options</label>
+              <label for="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select additional filtering options below">Filter Options</label>
               <div class="checkbox">
-                <label><input type="checkbox" id="filter_option_high_impact" name="filter_option_high_impact" {% if form.get('filter_option_high_impact') %}checked{% endif %}>
+                <label  data-toggle="tooltip" data-placement="top" title="Inlcude high impact mutations (stop_gained, frameshift_variants) to gene burden"><input type="checkbox" id="filter_option_high_impact" name="filter_option_high_impact" {% if form.get('filter_option_high_impact') %}checked{% endif %}>
                   Include high impact
                 </label>
               </div>
               <div class="checkbox">
-                <label><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
+                <label  data-toggle="tooltip" data-placement="top" title="Do not include splice region variants to gene burden"><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
               </div>
            </div>
          </div>
 
           <div class="row">
             <div class="form-group col-lg-12">
-              <label for="burdens" class="control-label">Genes and Burdens</label>
+              <label for="burdens" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">Genes and Burdens</label>
               <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
             </div>
           </div>
@@ -151,6 +151,11 @@ body {
         $('#filter_af_value').val('0.001');
         $('#filter_option_high_impact').attr("checked", true);
         $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
+      })
+    </script>
+    <script>
+      $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip( { placement: 'right' } );
       })
     </script>
   </body>

@@ -19,9 +19,9 @@
 
 
     <style>
-body {
-  padding-top: 50px;
-}
+    body {
+      padding-top: 50px;
+    }
     </style>
 
   </head>
@@ -58,13 +58,19 @@ body {
             {% if exclude_splice %}Excluded splice variants.{% endif %}
         </div>
 {% if warnings %}
-        <div class="alert alert-warning">
+      <div class = "alert alert-warning">
+        <a href="#warninglabels" id = "warninglabellink" class="alert alert-warning" data-toggle="dropdown" style="border-style:none;">
+          Show/hide warnings ({{ warnings|length }})
+        </a>
+        <div id = "warninglabels" class = "alert alert-warning" style="border-style:none;">
           <ul>
           {% for warning in warnings %}
             <li>{{ warning }}</li>
           {% endfor %}
           </ul>
         </div>
+      </div>
+
 {% endif %}
 
         <table id="table_result" class="display">
@@ -81,7 +87,7 @@ body {
           <tbody>
             {% for item in result %}
             <tr>
-              <td><a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank"">{{ item.gene }}</a></td>
+              <td><a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank">{{ item.gene }}</a></td>
               <td>{{ item.burden }}</td>
               <td>{{ item.matches }}</td>
               <td>{{ item.protein_length }}</td>
@@ -112,7 +118,9 @@ body {
 
     <script>
 $(document).ready(function () {
-    $('#table_result').DataTable();
+    $('#table_result').DataTable({
+        "order": [[ 5, "asc" ]]
+    });
     data = [{
         x: [ {{ protein_lengths }} ],
         y: [ {{ binomial_pvalues }} ],
@@ -127,6 +135,11 @@ $(document).ready(function () {
     };
     Plotly.plot("protein_binomial", data, layout);
 } );
+    </script>
+    <script>
+    function toggler(divId) {
+      $("#" + divId).toggle();
+    }
     </script>
   </body>
 </html>
