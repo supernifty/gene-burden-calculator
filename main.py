@@ -11,7 +11,7 @@ import calculate
 app = flask.Flask(__name__)
 
 DB = "./exac.db"
-EXAC_POPULATION = 53105
+EXAC_POPULATION = 53105.0
 
 ### database access
 def db():
@@ -54,6 +54,7 @@ def process():
 
     # population filter
     filter_af_pop = flask.request.form['filter_af_pop']
+    print str(filter_af_pop)
     if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
         flask.render_template('main.html', errors=['Invalid exac population name'])
     try:
@@ -115,7 +116,8 @@ def process():
 
         if matches[1] is not None:
             statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
-            result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], 'z_test': statistics[0], 'binomial_test': statistics[1]})
+            result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], \
+                'z_test': statistics[0], 'binomial_test': statistics[1], 'relative_risk': statistics[2], 'rr_conf_interval': statistics[3]})
         else:
             # gene is no good
             warnings.append( 'Gene "{}" had no matches'.format(fields[0]))
@@ -131,6 +133,8 @@ def process():
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
+            relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
+            rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
             warnings = warnings
         )
     else:
@@ -147,6 +151,13 @@ def main():
         return process()
     else:
         return flask.render_template('main.html', form=flask.request.form)
+
+@app.route('/about')
+def about():
+    '''
+        main entry point
+    '''
+    return flask.render_template('about.html')
 
 if __name__ == '__main__':
     app.run(debug=False,host='0.0.0.0')
