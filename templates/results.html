@@ -62,7 +62,7 @@
         <a role="button" href="#warninglabels" id = "warninglabellink" class="alert alert-warning" data-toggle="collapse" data-parent="#dropdown" aria-expanded="false" style="border-style:none;">
           Show/hide warnings ({{ warnings|length }})
         </a>
-        <div id = "warninglabels" class = "alert alert-warning" style="border-style:none;">
+        <div id = "warninglabels" class = "alert alert-warning" style="border-style:none;" hidden="True">
           <ul>
           {% for warning in warnings %}
             <li>{{ warning }}</li>
