@@ -44,7 +44,7 @@
           <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
             <li><a href="/about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="/contact">Contact</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -91,8 +91,7 @@
           <div class="row">
             <div class="form-group col-lg-4">
               <label for="filter_af_pop" class="control-label" data-toggle="tooltip" data-placement="top" title="Select comparison dataset and population">Population Filter</label>
-              <select id="filter_af_pop" name="filter_af_pop" class="form-control" data-live-search="true" multiple>
-              <!-- <select id="filter_af_pop" name="filter_af_pop" class="selectpicker" data-live-search="true" multiple> -->
+              <select multiple id="filter_af_pop" name="filter_af_pop" class="form-control">
                 {% for display, opt in (('ExAC All', 'exac_all'), ('ExAC African/African American', 'exac_african'), ('ExAC Latino', 'exac_latino'), ('ExAC East Asian', 'exac_east_asian'), ('ExAC Finnish', 'exac_fin'), ('ExAC Non-Finnish European', 'exac_nonfin_eur'), ('ExAC South Asian', 'exac_south_asian'), ('ExAC Other', 'exac_other')) %}
                   <option value='{{ opt }}' {% if (opt == form.filter_af_pop) %} selected="selected" {% endif %}>{{ display }}</option>
                 {% endfor %}
@@ -124,7 +123,6 @@
               <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
             </div>
           </div>
-
 
           <div class="row">
             <div class="form-group col-lg-12">

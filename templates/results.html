@@ -123,7 +123,10 @@
     <script>
 $(document).ready(function () {
     $('#table_result').DataTable({
-        "order": [[ 5, "asc" ]]
+        "order": [[ 5, "asc" ]],
+        "columnDefs": [
+          {"targets": 7, "orderable": false}
+        ]
     });
     data = [{
         x: [ {{ protein_lengths }} ],

@@ -53,10 +53,13 @@ def process():
     exclude_splice = flask.request.form.get('filter_option_splice') is not None
 
     # population filter
-    filter_af_pop = flask.request.form['filter_af_pop']
-    print str(filter_af_pop)
-    if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
-        flask.render_template('main.html', errors=['Invalid exac population name'])
+    filter_af_pop_temp = flask.request.form.getlist('filter_af_pop')
+    # filter_af_pop = filter_af_pop_temp.encode('ascii')
+    filter_af_pop = [i.encode('utf-8') for i in filter_af_pop_temp]
+
+    # if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
+    if not set(filter_af_pop).issubset(set(['exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'])):
+        flask.render_template('main.html', errors=['Invalid population name'])
     try:
         filter_af_value = float(flask.request.form['filter_af_value'])
     except ValueError:
@@ -99,11 +102,12 @@ def process():
         if exclude_splice:
             additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
 
-        # population filter
+        # population filter for a list of selected populations
         population_filter = ''
         if filter_af_pop:
-            population_filter += (" and exac.{} < ?").format(filter_af_pop)
-            sql_parameters.append(filter_af_value)
+            for pop_value in filter_af_pop:
+                population_filter += (" and exac.{} < ?").format(pop_value)
+                sql_parameters.append(filter_af_value)
 
         # find matching genes
         matches = query_db(
@@ -154,10 +158,11 @@ def main():
 
 @app.route('/about')
 def about():
-    '''
-        main entry point
-    '''
     return flask.render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    return flask.render_template('contact.html')
 
 if __name__ == '__main__':
     app.run(debug=False,host='0.0.0.0')
