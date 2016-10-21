@@ -49,12 +49,40 @@
     </nav>
 
     <div class="container">
-        <h1>About BurGene</h1>
+      <div class="row">
+        <h2>About BurGene</h2>
         <p>
-          BurGene is an application that calculates the difference between frequency of variants observed in cases relative to
-          expected frequencies observed in  reference datasets such as the Exome Aggregation Consoritum (<a href="http://exac.broadinstitute.org">ExAC</a>). The current version provides data from
-          ExAC populations. In later releases, we will provide data from other resouces such TCGA.
+          BurGene is a tool for prioritizing genes based on the number of observed mutations.
         </p>
+        <p>
+          BurGene calculates the difference between the frequencies of observed gene variants in cases and a reference population
+          such as the Exome Aggregation Consoritum (<a href="http://exac.broadinstitute.org">ExAC</a>). The current version provides data from
+          the ExAC population, with more refernce data from TCGA coming soon.
+        </p>
+        <p>
+          Methods:<br>
+
+          The tools provides a comprehensive pipeline that starts with preparing a VCF file for analysis by annotation and predicting
+          impact using in-silico prediction methods. Next, we apply user specified variant level filters and based on the remaining variants
+          calculate gene level burden of likely intereresting variants for further analysis. The same filters are then applied to the reference population
+          data to form equivalent gene burdens.
+          <br>
+          We then apply hypothessis tests to compare the number of gene variants in the cases group to the reference dataset.
+          The tests include two population proportion z-test and binomial exact tests.
+        </p>
+        <p>
+          Example usage:<br>
+
+          We have germline exome data from 700 patients.
+
+          We employed a standard variant calling pipeline (based on GATK) to call variants using hg19 as reference.
+
+          atm 16/700 v 72/53105 0.001 and condel>0.8
+
+
+
+        </p>
+      </div>
     </div><!-- /.container -->
 
 

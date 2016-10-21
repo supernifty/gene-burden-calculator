@@ -59,9 +59,10 @@
         </div>
 {% if warnings %}
       <div class = "alert alert-warning">
-        <a role="button" href="#warninglabels" id = "warninglabellink" class="alert alert-warning" data-toggle="collapse" data-parent="#dropdown" aria-expanded="false" style="border-style:none;">
+        <!-- <a role="button" href="#warninglabels" id = "warninglabellink" class="alert alert-warning" data-toggle="collapse" data-parent="#dropdown" aria-expanded="false" style="border-style:none;"> -->
+        <p class="link" href="#warninglabels" id = "warninglabellink" data-toggle="collapse" data-parent="#dropdown" aria-expanded="false" style="border-style:none;">
           Show/hide warnings ({{ warnings|length }})
-        </a>
+        </p>
         <div id = "warninglabels" class = "alert alert-warning" style="border-style:none;" hidden="True">
           <ul>
           {% for warning in warnings %}
