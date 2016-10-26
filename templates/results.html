@@ -59,9 +59,8 @@
         </div>
 {% if warnings %}
       <div class = "alert alert-warning">
-        <!-- <a role="button" href="#warninglabels" id = "warninglabellink" class="alert alert-warning" data-toggle="collapse" data-parent="#dropdown" aria-expanded="false" style="border-style:none;"> -->
-        <p class="link" href="#warninglabels" id = "warninglabellink" data-toggle="collapse" data-parent="#dropdown" aria-expanded="false" style="border-style:none;">
-          Show/hide warnings ({{ warnings|length }})
+        <p class="link" href="#warninglabels" id = "warninglabellink" data-toggle="collapse" data-parent="#dropdown" aria-expanded="true" style="border-style:none;cursor: pointer">
+          Warnings ({{ warnings|length }})
         </p>
         <div id = "warninglabels" class = "alert alert-warning" style="border-style:none;" hidden="True">
           <ul>
@@ -122,27 +121,36 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
     <script>
-$(document).ready(function () {
-    $('#table_result').DataTable({
+
+    $(document).ready(function () {
+      // var table = $('#table_result').DataTable();
+      $('#table_result').DataTable({
         "order": [[ 5, "asc" ]],
         "columnDefs": [
-          {"targets": 7, "orderable": false}
+          { "targets": 7, "orderable": false },
+          { "targets": [1], "searchable": false },
+          { "targets": [2], "searchable": false },
+          { "targets": [3], "searchable": false },
+          { "targets": [4], "searchable": false },
+          { "targets": [5], "searchable": false },
+          { "targets": [6], "searchable": false },
+          { "targets": [7], "searchable": false }
         ]
-    });
-    data = [{
+      });
+      data = [{
         x: [ {{ protein_lengths }} ],
         y: [ {{ binomial_pvalues }} ],
         mode: 'markers',
         type: 'scatter',
         text: [ {{ gene_list|safe }} ],
         marker: { size: 12 } }]
-    layout = {
+      layout = {
         yaxis: { type: 'log', autorange: true, title: 'p-value', tickformat: '.0e', hoverformat: '.3e' },
         xaxis: { type: 'log', autorange: true, title: 'Protein Length' },
         title: 'Protein Length vs Binomial p-value'
-    };
-    Plotly.plot("protein_binomial", data, layout);
-} );
+      };
+      Plotly.plot("protein_binomial", data, layout);
+    } );
     </script>
     <script>
     function toggler(divId) {

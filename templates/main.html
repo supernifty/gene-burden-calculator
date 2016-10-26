@@ -8,7 +8,7 @@
     <title>BurGene</title>
 
     <!-- Bootstrap -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">    
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap-picker -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/css/bootstrap-select.min.css">
 
@@ -64,7 +64,7 @@
         </div>
         {% endif %}
 
-        <form method="POST" action="/">
+        <form id="burgeneForm" method="POST" action="/">
           <div class="row">
             <div class="form-group col-lg-4">
               <label for="cases" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter number of cases (samples) in your study">Number of cases</label>
@@ -74,7 +74,7 @@
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_type" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant impact predcition method">Filter Type</label>
+              <label for="filter_type" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant impact predcition method">Prediction method</label>
               <select id="filter_type" name="filter_type" class="form-control">
                 {% for opt in ('CADD', 'Condel', 'Sift', 'Polyphen') %}
                   <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_type) %} selected="selected" {% endif %}>{{ opt }}</option>
@@ -83,7 +83,7 @@
             </div>
 
             <div class="form-group col-lg-4">
-              <label for="filter_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter score cutoff for the filter type tool selected above">Filter Value</label>
+              <label for="filter_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter score cutoff for the filter type tool selected above">Threshold score</label>
               <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
             </div>
           </div>
@@ -98,22 +98,39 @@
               </select>
             </div>
             <div class="form-group col-lg-4">
-              <label for="filter_af_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter allele frequency cutoff for the dataset selected above">Allele Frequency Filter Value</label>
+              <label for="filter_af_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter allele frequency cutoff for the dataset selected above">Allele Frequency Threshold</label>
               <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
             </div>
           </div>
 
           <div class="row">
-            <div class="form-group col-lg-4">
-              <label for="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select additional filtering options below">Filter Options</label>
+            <div class="form-group col-lg-1">
+              <label for="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select additional variant annotations to include">Filter Options</label>
+            </div>
+            <div class="form-group col-lg-2">
               <div class="checkbox">
+                <label for="missense_variant" data-toggle="tooltip" data-placement="top" title="missense_variant"><input type="checkbox" id="missense_variant" name="missense_variant" {% if form.get('missense_variant') %}checked{% endif %} checked>missense variant</label>
+              </div>
+              <div class="checkbox">
+                <label  data-toggle="tooltip" data-placement="top" title="splice_region_variant"><input type="checkbox" id="splice_region_variant" name="splice_region_variant">splice region variant</label>
+              </div>
+            </div>
+            <div class="form-group col-lg-2">
+              <div class="checkbox">
+                <label  data-toggle="tooltip" data-placement="top" title="frameshift_variant"><input type="checkbox" id="frameshift_variant" name="frameshift_variant" checked>frameshift variant</label>
+              </div>
+              <div class="checkbox">
+                <label  data-toggle="tooltip" data-placement="top" title="stop_gained"><input type="checkbox" id="stop_gained" name="stop_gained" checked>stop gained</label>
+              </div>
+
+              <!-- <div class="checkbox">
                 <label  data-toggle="tooltip" data-placement="top" title="Inlcude high impact mutations (stop_gained, frameshift_variants) to gene burden"><input type="checkbox" id="filter_option_high_impact" name="filter_option_high_impact" {% if form.get('filter_option_high_impact') %}checked{% endif %}>
                   Include high impact
                 </label>
               </div>
               <div class="checkbox">
                 <label  data-toggle="tooltip" data-placement="top" title="Do not include splice region variants to gene burden"><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
-              </div>
+              </div> -->
            </div>
          </div>
 
@@ -128,6 +145,7 @@
             <div class="form-group col-lg-12">
               <button type="submit" class="btn btn-primary">Analyze...</button>
               <button type="button" class="btn btn-link" id="prepopulate_btn">Use prepopulated example</button>
+              <button type="button" class="btn btn-link" id="clean_btn">Clear</button>
             </div>
           </div>
 
@@ -144,6 +162,7 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/js/bootstrap-select.min.js"></script>
 
+    <!-- script to populate example data -->
     <script>
       $('#prepopulate_btn').on('click', function (e) {
         $('#filter_type').val('condel');
@@ -151,9 +170,15 @@
         $('#cases').val('100');
         $('#filter_af_pop').val('exac_all');
         $('#filter_af_value').val('0.001');
-        $('#filter_option_high_impact').attr("checked", true);
+        $('#missense_variant').attr("checked", true);
+        $('#stop_gained').attr("checked", true);
         $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
       })
+    </script>
+    <script>
+    $('#clean_btn').on('click', function (e) {
+      document.getElementById("burgeneForm").reset();
+    })
     </script>
     <script>
       $(document).ready(function(){
