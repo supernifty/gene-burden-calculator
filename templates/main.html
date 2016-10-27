@@ -104,35 +104,40 @@
           </div>
 
           <div class="row">
-            <div class="form-group col-lg-1">
-              <label for="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select additional variant annotations to include">Filter Options</label>
-            </div>
-            <div class="form-group col-lg-2">
+            <div class="form-group col-lg-4">
+              <label for="filter_option_high_impact" name="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant annotations to include">Include variant impacts</label>
+              {% for opt in ('missense_variant', 'splice_region_variant', 'frameshift_variantSift', 'stop_gained') %}
               <div class="checkbox">
-                <label for="missense_variant" data-toggle="tooltip" data-placement="top" title="missense_variant"><input type="checkbox" id="missense_variant" name="missense_variant" {% if form.get('missense_variant') %}checked{% endif %} checked>missense variant</label>
-              </div>
-              <div class="checkbox">
-                <label  data-toggle="tooltip" data-placement="top" title="splice_region_variant"><input type="checkbox" id="splice_region_variant" name="splice_region_variant">splice region variant</label>
-              </div>
-            </div>
-            <div class="form-group col-lg-2">
-              <div class="checkbox">
-                <label  data-toggle="tooltip" data-placement="top" title="frameshift_variant"><input type="checkbox" id="frameshift_variant" name="frameshift_variant" checked>frameshift variant</label>
-              </div>
-              <div class="checkbox">
-                <label  data-toggle="tooltip" data-placement="top" title="stop_gained"><input type="checkbox" id="stop_gained" name="stop_gained" checked>stop gained</label>
-              </div>
-
-              <!-- <div class="checkbox">
-                <label  data-toggle="tooltip" data-placement="top" title="Inlcude high impact mutations (stop_gained, frameshift_variants) to gene burden"><input type="checkbox" id="filter_option_high_impact" name="filter_option_high_impact" {% if form.get('filter_option_high_impact') %}checked{% endif %}>
-                  Include high impact
+                <label for="impacts" data-toggle="tooltip" title="include ({{ opt | replace("_", " ") }}) variants">
+                  <!-- <input for='{{ opt }}' type="checkbox" name='{{ opt }}' id='{{ opt }}' {% if opt == 'missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }} -->
+                  <input name='{{ opt }}' type="checkbox" {% if opt=='missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }}
                 </label>
               </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- <div class="row">
+            <div class="form-group col-lg-1">
+              <label for="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select additional variant annotations to include">Include selected variant impacts</label>
+            </div>
+            <div class="form-group col-lg-2">
               <div class="checkbox">
-                <label  data-toggle="tooltip" data-placement="top" title="Do not include splice region variants to gene burden"><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
-              </div> -->
+                <label data-toggle="tooltip" title="include missense variants"><input checked for="missense_variant" type="checkbox" id="missense_variant" name="missense_variant" {% if form.get('missense_variant') %}checked{% endif %}>missense variant</label>
+              </div>
+              <div class="checkbox">
+                <label data-toggle="tooltip" title="include splice region variants"><input for="splice_region_variant" type="checkbox" id="splice_region_variant" name="splice_region_variant" {% if form.get('splice_region_variant') %}checked{% endif %}>splice region variant</label>
+              </div>
+            </div>
+            <div class="form-group col-lg-2">
+              <div class="checkbox">
+                <label data-toggle="tooltip" title="include frameshift variants"><input for="frameshift_variant" type="checkbox" id="frameshift_variant" name="frameshift_variant" {% if form.get('frameshift_variant') %}checked{% endif %}>frameshift variant</label>
+              </div>
+              <div class="checkbox">
+                <label data-toggle="tooltip" title="include stop gained"><input for="stop_gained" type="checkbox" id="stop_gained" name="stop_gained" {% if form.get('stop_gained') %}checked{% endif %}>stop gained</label>
+              </div>
            </div>
-         </div>
+         </div> -->
 
           <div class="row">
             <div class="form-group col-lg-12">
@@ -170,8 +175,10 @@
         $('#cases').val('100');
         $('#filter_af_pop').val('exac_all');
         $('#filter_af_value').val('0.001');
-        $('#missense_variant').attr("checked", true);
-        $('#stop_gained').attr("checked", true);
+        $('#splice_region_variant').prop("checked", false);
+        $('#frameshift_variant').prop("checked", false);
+        $('#stop_gained').prop("checked", false);
+        $('#missense_variant').prop("checked", true);
         $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
       })
     </script>

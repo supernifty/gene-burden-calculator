@@ -48,22 +48,37 @@ def process():
     except ValueError:
         errors.append('Filter value must be numeric')
 
-    # filter options
-    include_high_impact = flask.request.form.get('filter_option_high_impact') is not None
-    exclude_splice = flask.request.form.get('filter_option_splice') is not None
+    #
+    # check filter types options
+    # missense_variant = flask.request.form.get('missense_variant')
+    # splice_region_variant = flask.request.form.get('splice_region_variant')
+    # frameshift_variant = flask.request.form.get('frameshift_variant')
+    # stop_gained = flask.request.form.get('stop_gained')
+    try:
+        include_high_impact = flask.request.form.getlist('impacts')
+    except ValueError:
+        errors.append('Missing variant impact type')
+    #include_high_impact = flask.request.form.get('filter_option_high_impact') is not None
+    #exclude_splice = flask.request.form.get('filter_option_splice') is not None
+    # print include_high_impact
+    #
+    #
 
     # population filter
-    filter_af_pop_temp = flask.request.form.getlist('filter_af_pop')
-    # filter_af_pop = filter_af_pop_temp.encode('ascii')
-    filter_af_pop = [i.encode('utf-8') for i in filter_af_pop_temp]
-
-    # if filter_af_pop not in ('exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'):
-    if not set(filter_af_pop).issubset(set(['exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'])):
+    try:
+        filter_af_pop = [i.encode('utf-8') for i in flask.request.form.getlist('filter_af_pop')]
+    except ValueError:
         flask.render_template('main.html', errors=['Invalid population name'])
+        # errors.append('Invalid population name')
+
+    # check filter popultaion names?
+    if not set(filter_af_pop).issubset(set(['exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'])):
+         flask.render_template('main.html', errors=['Invalid population name'])
+    # filter AF value
     try:
         filter_af_value = float(flask.request.form['filter_af_value'])
     except ValueError:
-        errors.append('Filter allele frequency must be numeric')
+        errors.append('Filter allele frequency must be numeric')    
 
     # case count
     try:
@@ -99,8 +114,8 @@ def process():
         additional_filter = ''
         if include_high_impact:
             additional_filter += " or (impact_type = 'HIGH' and (impact = 'stop_gained' or impact = 'frameshift_variant'))"
-        if exclude_splice:
-            additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
+        # if exclude_splice:
+        #     additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
 
         # population filter for a list of selected populations
         population_filter = ''
@@ -131,9 +146,11 @@ def process():
             result=result,
             filter_type=filter_type,
             filter_value=filter_value,
+            filter_af_pop=','.join(filter_af_pop),
+            filter_af_value=filter_af_value,
             cases=cases,
             include_high_impact=include_high_impact,
-            exclude_splice=exclude_splice,
+            # exclude_splice=exclude_splice,
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
@@ -165,4 +182,4 @@ def contact():
     return flask.render_template('contact.html')
 
 if __name__ == '__main__':
-    app.run(debug=False,host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
