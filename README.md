@@ -3,6 +3,8 @@
 
 # Running
 ```
+virtualenv -p python3 burden-env
+source burden-env/bin/activate
 pip install -r requirements.txt
 python app.py
 ```

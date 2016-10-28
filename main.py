@@ -57,7 +57,7 @@ def process():
     # parse overall settings - filtering
     filter_type = flask.request.form['filter_type']
     if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
-        flask.render_template('main.html', errors=['Invalid filter type'])
+        flask.render_template('main.html', errors=['Invalid filter type'], form=flask.request.form)
     try:
         filter_value = float(flask.request.form['filter_value'])
     except ValueError:
@@ -65,7 +65,7 @@ def process():
 
     # check filter types options
     try:
-        include_high_impact = [i.encode('utf-8') for i in flask.request.form.getlist('impacts')]
+        include_high_impact = flask.request.form.getlist('impacts')
         if len(include_high_impact)==0:
             errors.append('Missing variant impact type')
     except ValueError:
@@ -73,16 +73,16 @@ def process():
 
     # population filter
     try:
-        filter_af_pop = [i.encode('utf-8') for i in flask.request.form.getlist('filter_af_pop')]
+        filter_af_pop = flask.request.form.getlist('filter_af_pop')
         if len(filter_af_pop)==0:
             errors.append('Invalid population name')
     except ValueError:
-        flask.render_template('main.html', errors=['Invalid population name'])
+        flask.render_template('main.html', errors=['Invalid population name'], form=flask.request.form)
         # errors.append('Invalid population name')
 
     # check filter popultaion names?
     if not set(filter_af_pop).issubset(set(['exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'])):
-         flask.render_template('main.html', errors=['Invalid population name'])
+         flask.render_template('main.html', errors=['Invalid population name'], form=flask.request.form)
     # filter AF value
     try:
         filter_af_value = float(flask.request.form['filter_af_value'])
@@ -130,11 +130,12 @@ def process():
         # print population_filter
 
         # find matching genes
-        matches = query_db(
-            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
+        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
                 filter_type,
                 additional_filter,
-                population_filter),
+                population_filter)
+        matches = query_db(
+                query,
                 sql_parameters,
                 one=True)
 
