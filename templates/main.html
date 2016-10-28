@@ -5,10 +5,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Exac Burden Calculator</title>
+    <title>BurGene</title>
 
     <!-- Bootstrap -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap-picker -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/css/bootstrap-select.min.css">
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -16,15 +18,14 @@
     <![endif]-->
 
     <style>
-body {
-  padding-top: 50px;
-}
+    body {
+      padding-top: 50px;
+    }
 
-.checkbox {
-  margin-top: 0;
-}
+    .checkbox {
+      margin-top: 0;
+    }
     </style>
-
   </head>
   <body>
 
@@ -37,13 +38,13 @@ body {
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">Exac Burden Calculation</a>
+          <a class="navbar-brand" href="/">BurGene</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -63,17 +64,17 @@ body {
         </div>
         {% endif %}
 
-        <form method="POST" action="/">
+        <form id="burgeneForm" method="POST" action="/">
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="cases" class="control-label">Number of cases</label>
+              <label for="cases" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter number of cases (samples) in your study">Number of cases</label>
               <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_type" class="control-label">Filter Type</label>
+              <label for="filter_type" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant impact predcition method">Prediction method</label>
               <select id="filter_type" name="filter_type" class="form-control">
                 {% for opt in ('CADD', 'Condel', 'Sift', 'Polyphen') %}
                   <option value='{{ opt.lower() }}' {% if (opt.lower() == form.filter_type) %} selected="selected" {% endif %}>{{ opt }}</option>
@@ -82,52 +83,52 @@ body {
             </div>
 
             <div class="form-group col-lg-4">
-              <label for="filter_value" class="control-label">Filter Value</label>
+              <label for="filter_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter score cutoff for the filter type tool selected above">Threshold score</label>
               <input name="filter_value" type="text" class="form-control" id="filter_value" placeholder="Value" value="{{ form.filter_value }}">
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_af_pop" class="control-label">Population Filter</label>
-              <select id="filter_af_pop" name="filter_af_pop" class="form-control">
-                {% for display, opt in (('All', 'exac_all'), ('African/African American', 'exac_african'), ('Latino', 'exac_latino'), ('East Asian', 'exac_east_asian'), ('Finnish', 'exac_fin'), ('Non-Finnish European', 'exac_nonfin_eur'), ('South Asian', 'exac_south_asian'), ('Other', 'exac_other')) %}
+              <label for="filter_af_pop" class="control-label" data-toggle="tooltip" data-placement="top" title="Select comparison dataset and population">Population Filter</label>
+              <select multiple id="filter_af_pop" name="filter_af_pop" class="form-control">
+                {% for display, opt in (('ExAC All', 'exac_all'), ('ExAC African/African American', 'exac_african'), ('ExAC Latino', 'exac_latino'), ('ExAC East Asian', 'exac_east_asian'), ('ExAC Finnish', 'exac_fin'), ('ExAC Non-Finnish European', 'exac_nonfin_eur'), ('ExAC South Asian', 'exac_south_asian'), ('ExAC Other', 'exac_other')) %}
                   <option value='{{ opt }}' {% if (opt == form.filter_af_pop) %} selected="selected" {% endif %}>{{ display }}</option>
                 {% endfor %}
               </select>
             </div>
             <div class="form-group col-lg-4">
-              <label for="filter_af_value" class="control-label">Allele Frequency Filter Value</label>
+              <label for="filter_af_value" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter allele frequency cutoff for the dataset selected above">Allele Frequency Threshold</label>
               <input name="filter_af_value" type="text" class="form-control" id="filter_af_value" placeholder="Value" value="{{ form.filter_af_value }}">
             </div>
           </div>
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_option_high_impact" class="control-label">Filter Options</label>
+              <label for="filter_option_high_impact" name="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant annotations to include">Include variant impacts</label>
+              {% for opt in ('missense_variant', 'splice_region_variant', 'frameshift_variant', 'stop_gained') %}
               <div class="checkbox">
-                <label><input type="checkbox" id="filter_option_high_impact" name="filter_option_high_impact" {% if form.get('filter_option_high_impact') %}checked{% endif %}>
-                  Include high impact
+                <label data-toggle="tooltip" title="include ({{ opt | replace("_", " ") }}) variants">
+                  <!-- <input for='{{ opt }}' type="checkbox" name='{{ opt }}' id='{{ opt }}' {% if opt == 'missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }} -->
+                  <input name=impacts value='{{ opt }}' type="checkbox" {% if opt=='missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }}
                 </label>
               </div>
-              <div class="checkbox">
-                <label><input type="checkbox" id="filter_option_splice" name="filter_option_splice" {% if form.get('filter_option_splice') %}checked{% endif %}> Exclude splice</label>
-              </div>
-           </div>
-         </div>
-
-          <div class="row">
-            <div class="form-group col-lg-12">
-              <label for="burdens" class="control-label">Genes and Burdens</label>
-              <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
+              {% endfor %}
             </div>
           </div>
 
+          <div class="row">
+            <div class="form-group col-lg-12">
+              <label for="burdens" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">Genes and Burdens</label>
+              <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
+            </div>
+          </div>
 
           <div class="row">
             <div class="form-group col-lg-12">
               <button type="submit" class="btn btn-primary">Analyze...</button>
               <button type="button" class="btn btn-link" id="prepopulate_btn">Use prepopulated example</button>
+              <button type="button" class="btn btn-link" id="clean_btn">Clear</button>
             </div>
           </div>
 
@@ -141,7 +142,10 @@ body {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/js/bootstrap-select.min.js"></script>
 
+    <!-- script to populate example data -->
     <script>
       $('#prepopulate_btn').on('click', function (e) {
         $('#filter_type').val('condel');
@@ -149,8 +153,21 @@ body {
         $('#cases').val('100');
         $('#filter_af_pop').val('exac_all');
         $('#filter_af_value').val('0.001');
-        $('#filter_option_high_impact').attr("checked", true);
-        $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
+        $('#splice_region_variant').prop("checked", false);
+        $('#frameshift_variant').prop("checked", false);
+        $('#stop_gained').prop("checked", false);
+        $('#missense_variant').prop("checked", true);
+        $('#burdens').val('TTN,100\nADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
+      })
+    </script>
+    <script>
+    $('#clean_btn').on('click', function (e) {
+      document.getElementById("burgeneForm").reset();
+    })
+    </script>
+    <script>
+      $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip( { placement: 'right' } );
       })
     </script>
   </body>

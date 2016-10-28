@@ -4,7 +4,7 @@
 A tool to calculate two proportion Z-test and binomial test
 to compare frequency of deleterious variants between cases and
 expected population for example ExAC.
-The two input files contain gene variants counts for their 
+The two input files contain gene variants counts for their
 corresponding populations.
 
 <input format>
@@ -17,6 +17,13 @@ Contact: khalid.mahmood@unimelb.edu.au
 import math
 import scipy.stats
 import statsmodels.stats.proportion
+import numpy as np
+
+# get confidence interval for relative risk calculation at 95%
+def get_confidence_interval(rr, se):
+    low_ci = round(np.exp(np.log(rr) - 1.96 * se), 2)
+    up_ci = round(np.exp(np.log(rr) + 1.96 * se), 2)
+    return (low_ci, up_ci)
 
 def calculate_burden_statistics(case_burden, total_cases, population_burden, total_population):
     '''
@@ -28,7 +35,10 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     (0.022099924798115057, 0.054308032446737049)
     >>> calculate_burden_statistics(2,692,56,53105)
     (0.14375451576421008, 0.16615019140170481)
+    >>> calculate_burden_statistics(11,692,133,53105)
+    (*,*,6.3,[3.2,11.3])
     '''
+
     case_proportion = 1.0 * case_burden / total_cases
     population_proportion = 1.0 * population_burden / total_population
     #print("case_burden {} total_cases {} pop_burden {} total_pop {}".format(case_burden, total_cases, population_burden, total_population))
@@ -49,9 +59,14 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     # p-value from binomial test
     binomial_p_value = statsmodels.stats.proportion.binom_test(case_burden, total_cases, prop=population_proportion, alternative="two-sided")
 
-    return (z_test_p_value, binomial_p_value)
+    # calculate relative risk and associated confdence interval    
+    relative_risk = (case_burden/(case_burden+total_cases))/(population_burden/(population_burden+total_population))
+    standard_error = np.sqrt((1.0/case_burden) + (1.0/population_burden) - (1.0/(case_burden+total_cases)) - (1.0/(population_burden+total_population)))
+    rr_conf_interval = get_confidence_interval(relative_risk, standard_error)
+
+
+    return (z_test_p_value, binomial_p_value, relative_risk, rr_conf_interval)
 
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
