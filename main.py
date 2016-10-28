@@ -4,14 +4,21 @@
 '''
 
 import flask
+import os
 import sqlite3
+import uuid
 
 import calculate
-
-app = flask.Flask(__name__)
+import runner
 
 DB = "./exac.db"
+
 EXAC_POPULATION = 53105
+UPLOAD_FOLDER = './uploads'
+ALLOWED_EXTENSIONS = set(['vcf'])
+
+app = flask.Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 ### database access
 def db():
@@ -136,6 +143,32 @@ def process():
     else:
         return flask.render_template('main.html', errors=errors, form=flask.request.form)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+def generate_id():
+    return str(uuid.uuid4())
+
+def process_upload():
+    errors = []
+    if 'vcf' not in flask.request.files:
+        errors.append('Please specify a file')
+        return flask.render_template('upload.html', errors=errors, form=flask.request.form)
+
+    vcf_file = flask.request.files['vcf']
+    # if user does not select file, browser also
+    # submit a empty part without filename
+    if vcf_file.filename == '':
+        errors.append('No selected file')
+        return flask.render_template('upload.html', errors=errors, form=flask.request.form)
+
+    if vcf_file and allowed_file(vcf_file.filename):
+        job_id = generate_id()
+        vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
+        # start processing
+        runner.add_to_queue(DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
+        return flask.redirect(flask.url_for('process_vcf', job=job_id))
+
 ### front end
 @app.route('/', methods=['GET', 'POST'])
 def main():
@@ -143,10 +176,30 @@ def main():
         main entry point
     '''
     if flask.request.method == 'POST':
-        print("in post")
         return process()
     else:
         return flask.render_template('main.html', form=flask.request.form)
+
+
+@app.route('/vcf_result/<job>')
+def vcf_result(job):
+    data = open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r').readlines()
+    return flask.render_template('vcf_result.html', job=job, data=data)
+
+@app.route('/process_vcf/<job>')
+def process_vcf(job):
+    status = runner.job_status(DB, job)
+    if status['status'] == 'F':
+        return flask.redirect(flask.url_for("vcf_result", job=job))
+    else:
+        return flask.render_template('process_vcf.html', job=job, status=status)
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if flask.request.method == 'POST':
+        return process_upload()
+    else:
+        return flask.render_template('upload.html', form=flask.request.form)
 
 if __name__ == '__main__':
     app.run(debug=False,host='0.0.0.0')
