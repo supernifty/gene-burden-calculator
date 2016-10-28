@@ -53,10 +53,9 @@
         <h1>Burden Calculation Results</h1>
 
         <div class="alert alert-success" role="alert">
-            Showing results with <strong>{{ filter_type }} &le; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.
-            {% if include_high_impact %}Included high impact variants.{% endif %}
-            {% if exclude_splice %}Excluded splice variants.{% endif %}
-            Relative to <strong>{{ filter_af_pop }}</strong> popultaions and MAF &lt; <strong>{{ filter_af_value }}</strong>
+            Showing results from <strong>{{ cases }} cases</strong> with <strong>{{ filter_type }} &le; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.
+            {% if include_high_impact %}Include variant impact types {% endif %} <strong>{{ include_high_impact }}</strong>.
+            Relative to <strong>{{ filter_af_pop }}</strong> popultaions and MAFs &lt; <strong>{{ filter_af_value }}</strong>
         </div>
 {% if warnings %}
       <div class = "alert alert-warning">

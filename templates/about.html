@@ -62,13 +62,14 @@
         <p>
           Methods:<br>
 
-          The tools provides a comprehensive pipeline that starts with preparing a VCF file for analysis by annotation and predicting
+          The tools provides a pipeline that starts with preparing a VCF file for analysis by annotation and predicting variant
           impact using in-silico prediction methods. Next, we apply user specified variant level filters and based on the remaining variants
           calculate gene level burden of likely intereresting variants for further analysis. The same filters are then applied to the reference population
           data to form equivalent gene burdens.
           <br>
           We then apply hypothessis tests to compare the number of gene variants in the cases group to the reference dataset.
           The tests include two population proportion z-test and binomial exact tests.
+          Also provided is a relative risk ratio.
         </p>
         <p>
           Example usage:<br>
@@ -78,8 +79,6 @@
           We employed a standard variant calling pipeline (based on GATK) to call variants using hg19 as reference.
 
           atm 16/700 v 72/53105 0.001 and condel>0.8
-
-
 
         </p>
       </div>

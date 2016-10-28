@@ -39,6 +39,14 @@ def process():
     '''
     errors = []
 
+    # case count
+    try:
+        cases = int(flask.request.form['cases'])
+        if cases <= 0:
+            errors.append('Number of cases must be greater than zero')
+    except ValueError:
+            errors.append('Number of cases must be numeric')
+
     # parse overall settings - filtering
     filter_type = flask.request.form['filter_type']
     if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
@@ -48,25 +56,19 @@ def process():
     except ValueError:
         errors.append('Filter value must be numeric')
 
-    #
     # check filter types options
-    # missense_variant = flask.request.form.get('missense_variant')
-    # splice_region_variant = flask.request.form.get('splice_region_variant')
-    # frameshift_variant = flask.request.form.get('frameshift_variant')
-    # stop_gained = flask.request.form.get('stop_gained')
     try:
-        include_high_impact = flask.request.form.getlist('impacts')
+        include_high_impact = [i.encode('utf-8') for i in flask.request.form.getlist('impacts')]
+        if len(include_high_impact)==0:
+            errors.append('Missing variant impact type')
     except ValueError:
         errors.append('Missing variant impact type')
-    #include_high_impact = flask.request.form.get('filter_option_high_impact') is not None
-    #exclude_splice = flask.request.form.get('filter_option_splice') is not None
-    # print include_high_impact
-    #
-    #
 
     # population filter
     try:
         filter_af_pop = [i.encode('utf-8') for i in flask.request.form.getlist('filter_af_pop')]
+        if len(filter_af_pop)==0:
+            errors.append('Invalid population name')
     except ValueError:
         flask.render_template('main.html', errors=['Invalid population name'])
         # errors.append('Invalid population name')
@@ -78,15 +80,7 @@ def process():
     try:
         filter_af_value = float(flask.request.form['filter_af_value'])
     except ValueError:
-        errors.append('Filter allele frequency must be numeric')    
-
-    # case count
-    try:
-        cases = int(flask.request.form['cases'])
-        if cases <= 0:
-            errors.append('Number of cases must be greater than zero')
-    except ValueError:
-        errors.append('Number of cases must be numeric')
+        errors.append('Filter allele frequency must be numeric')
 
     # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
@@ -111,11 +105,14 @@ def process():
         sql_parameters = [fields[0], filter_value]
 
         # additional
-        additional_filter = ''
-        if include_high_impact:
-            additional_filter += " or (impact_type = 'HIGH' and (impact = 'stop_gained' or impact = 'frameshift_variant'))"
-        # if exclude_splice:
-        #     additional_filter += " and impact != 'splice_acceptor_variant' and impact != 'splice_donor_variant'"
+        additional_filter = " and ("
+        if len(include_high_impact)>0:
+            for impact in include_high_impact[:-1]:
+                additional_filter += (" impact = ? or ")
+                sql_parameters.append(impact)
+            additional_filter += (" impact = ? ")
+            sql_parameters.append(include_high_impact[-1])
+        additional_filter += ")"
 
         # population filter for a list of selected populations
         population_filter = ''
@@ -123,10 +120,11 @@ def process():
             for pop_value in filter_af_pop:
                 population_filter += (" and exac.{} < ?").format(pop_value)
                 sql_parameters.append(filter_af_value)
+        # print population_filter
 
         # find matching genes
         matches = query_db(
-            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? {} {})".format(
+            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
                 filter_type,
                 additional_filter,
                 population_filter),
@@ -149,8 +147,7 @@ def process():
             filter_af_pop=','.join(filter_af_pop),
             filter_af_value=filter_af_value,
             cases=cases,
-            include_high_impact=include_high_impact,
-            # exclude_splice=exclude_splice,
+            include_high_impact=','.join(include_high_impact),            
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
