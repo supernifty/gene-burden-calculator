@@ -14,7 +14,8 @@ import time
 import traceback
 
 DEBUG = False
-COMMAND = "wc < {input} > {output}"
+#COMMAND = "wc < {input} > {output}"
+COMMAND = "./run_annotation.sh {input} {output}"
 
 def log(sev, msg):
     if DEBUG or sev != 'DEBUG':
@@ -28,11 +29,11 @@ def query_db(db, query, args=(), one=False):
 
 def run_queue(db_file):
     db = sqlite3.connect(db_file)
-    log('INFO', 'checking for jobs to run...')
+    log('DEBUG', 'checking for jobs to run...')
     
     next_job = query_db(db, '''select rowid, input, output from job where status = 'A' order by created limit 1''', one=True)
     if next_job is None:
-        log('INFO', 'nothing to do')
+        log('DEBUG', 'nothing to do')
     else:
         parameters = {'input': next_job[1], 'output': next_job[2], 'id': next_job[0]}
         db.execute('''update job set status = 'R', started = ? where rowid = ?''', (datetime.datetime.utcnow(), next_job[0])) # R = running
@@ -45,10 +46,10 @@ def run_queue(db_file):
         db.execute('''update job set status = 'F', finished = ? where rowid = ?''', (datetime.datetime.utcnow(), next_job[0])) # F = finished
         db.commit()
     
-    log('INFO', 'checking for jobs to run: done')
+    log('DEBUG', 'checking for jobs to run: done')
 
 def add_to_queue(db_file, job_id, src_file, dest_file):
-    log('INFO', 'adding item to queue...')
+    log('DEBUG', 'adding item to queue...')
     db = sqlite3.connect(db_file)
 
     # generate schema if not already present
@@ -58,12 +59,15 @@ def add_to_queue(db_file, job_id, src_file, dest_file):
     db.execute('''insert into job (job_id, created, input, output, status) values (?, ?, ?, ?, ?)''', (job_id, datetime.datetime.utcnow(), src_file, dest_file, 'A')) # A = available
 
     db.commit()
-    log('INFO', 'adding item to queue: done')
+    log('DEBUG', 'adding item to queue: done')
 
 def job_status(db_file, job_id):
     db = sqlite3.connect(db_file)
     status = query_db(db, '''select created, started, finished, status from job where job_id = ?''', [job_id], one=True)
-    return { 'created': status[0], 'started': status[1], 'finished': status[2], 'status': status[3] }
+    if status is None:
+        return None
+    else:
+        return { 'created': status[0], 'started': status[1], 'finished': status[2], 'status': status[3] }
 
 def create(db_file):
     # generate schema if not already present

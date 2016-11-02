@@ -206,13 +206,19 @@ def main():
 
 @app.route('/vcf_result/<job>')
 def vcf_result(job):
-    data = open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r').readlines()
-    return flask.render_template('vcf_result.html', job=job, data=data)
+    status = runner.job_status(RUNNER_DB, job)
+    if status is None:
+        return flask.render_template('upload.html', form=flask.request.form)
+    else:
+        data = open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r').readlines()
+        return flask.render_template('vcf_result.html', job=job, data=data)
 
 @app.route('/process_vcf/<job>')
 def process_vcf(job):
     status = runner.job_status(RUNNER_DB, job)
-    if status['status'] == 'F':
+    if status is None:
+        return flask.render_template('upload.html', form=flask.request.form)
+    elif status['status'] == 'F':
         return flask.redirect(flask.url_for("vcf_result", job=job))
     else:
         return flask.render_template('process_vcf.html', job=job, status=status)
