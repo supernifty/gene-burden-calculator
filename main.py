@@ -12,6 +12,7 @@ import calculate
 import runner
 
 DB = "./exac.db"
+RUNNER_DB = "./runner.db"
 
 EXAC_POPULATION = 53105.0
 UPLOAD_FOLDER = './uploads'
@@ -189,7 +190,7 @@ def process_upload():
         job_id = generate_id()
         vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
         # start processing
-        runner.add_to_queue(DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
+        runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
         return flask.redirect(flask.url_for('process_vcf', job=job_id))
 
 ### front end
@@ -210,7 +211,7 @@ def vcf_result(job):
 
 @app.route('/process_vcf/<job>')
 def process_vcf(job):
-    status = runner.job_status(DB, job)
+    status = runner.job_status(RUNNER_DB, job)
     if status['status'] == 'F':
         return flask.redirect(flask.url_for("vcf_result", job=job))
     else:

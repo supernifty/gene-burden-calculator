@@ -50,6 +50,7 @@ def run_queue(db_file):
 def add_to_queue(db_file, job_id, src_file, dest_file):
     log('INFO', 'adding item to queue...')
     db = sqlite3.connect(db_file)
+
     # generate schema if not already present
     db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char)''')
 
@@ -64,6 +65,12 @@ def job_status(db_file, job_id):
     status = query_db(db, '''select created, started, finished, status from job where job_id = ?''', [job_id], one=True)
     return { 'created': status[0], 'started': status[1], 'finished': status[2], 'status': status[3] }
 
+def create(db_file):
+    # generate schema if not already present
+    db = sqlite3.connect(db_file)
+    # generate schema if not already present
+    db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char)''')
+
 def main():
     parser = argparse.ArgumentParser(description='Update job status database')
     parser.add_argument('--db', required=True, help='target database')
@@ -73,6 +80,8 @@ def main():
     parser.add_argument('--output', required=False, help='output file')
     args = parser.parse_args()
     DEBUG = args.debug
+
+    create(args.db)
 
     if args.input and args.output:
         add_to_queue(args.db, "test_job", args.input, args.output)
