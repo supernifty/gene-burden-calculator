@@ -105,12 +105,12 @@
 
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="filter_option_high_impact" name="filter_option_high_impact" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant annotations to include">Include variant impacts</label>
+              <label for="impacts" name="impacts" class="control-label" data-toggle="tooltip" data-placement="top" title="Select variant annotations to include">Include variant impacts</label>
               {% for opt in ('missense_variant', 'splice_region_variant', 'frameshift_variant', 'stop_gained') %}
-              <div class="checkbox">
+              <div id="impact_type" class="checkbox">
                 <label data-toggle="tooltip" title="include ({{ opt | replace("_", " ") }}) variants">
-                  <!-- <input for='{{ opt }}' type="checkbox" name='{{ opt }}' id='{{ opt }}' {% if opt == 'missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }} -->
-                  <input name=impacts value='{{ opt }}' type="checkbox" {% if opt=='missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }}
+                    <!-- <input id='{{ opt }}' value='{{ opt }}' type="checkbox" {% if opt=='missense_variant' %}checked{% endif %}>{{ opt | replace("_", " ") }} -->
+                    <input id=name='{{ opt }}' name='{{ opt }}' value='{{ opt }}' type="checkbox">{{ opt | replace("_", " ") }}
                 </label>
               </div>
               {% endfor %}
@@ -151,12 +151,20 @@
         $('#filter_type').val('condel');
         $('#filter_value').val('0.5');
         $('#cases').val('100');
-        $('#filter_af_pop').val('exac_all');
+        var values="exac_all,exac_nonfin_eur";
+        // $('#filter_af_pop').val('exac_all');
+        $('select[name="filter_af_pop"]').children('[value="exac_all"],[value="exac_african"]')
+            .attr('selected', 'selected');
         $('#filter_af_value').val('0.001');
         $('#splice_region_variant').prop("checked", false);
         $('#frameshift_variant').prop("checked", false);
         $('#stop_gained').prop("checked", false);
         $('#missense_variant').prop("checked", true);
+        $('#missense_variant').prop("checked", true);
+        // var selected = ["missense_variant","stop_gained"];
+        // $('#impact_type input:checked').each(function() {
+        //     selected.push($(this).attr('name'));
+        // });
         $('#burdens').val('TTN,100\nADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
       })
     </script>

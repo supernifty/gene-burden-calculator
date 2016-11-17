@@ -128,7 +128,7 @@ def process():
             for pop_value in filter_af_pop:
                 population_filter += (" and exac.{} < ?").format(pop_value)
                 sql_parameters.append(filter_af_value)
-        # print population_filter
+        print additional_filter + " " + population_filter
 
         # find matching genes
         query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
@@ -156,7 +156,7 @@ def process():
             filter_af_pop=','.join(filter_af_pop),
             filter_af_value=filter_af_value,
             cases=cases,
-            include_high_impact=','.join(include_high_impact),            
+            include_high_impact=','.join(include_high_impact),
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
