@@ -4,14 +4,22 @@
 '''
 
 import flask
+import os
 import sqlite3
+import uuid
 
 import calculate
-
-app = flask.Flask(__name__)
+import runner
 
 DB = "./exac.db"
+RUNNER_DB = "./runner.db"
+
 EXAC_POPULATION = 53105.0
+UPLOAD_FOLDER = './uploads'
+ALLOWED_EXTENSIONS = set(['vcf'])
+
+app = flask.Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 ### database access
 def db():
@@ -50,7 +58,7 @@ def process():
     # parse overall settings - filtering
     filter_type = flask.request.form['filter_type']
     if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
-        flask.render_template('main.html', errors=['Invalid filter type'])
+        flask.render_template('main.html', errors=['Invalid filter type'], form=flask.request.form)
     try:
         filter_value = float(flask.request.form['filter_value'])
     except ValueError:
@@ -58,7 +66,7 @@ def process():
 
     # check filter types options
     try:
-        include_high_impact = [i.encode('utf-8') for i in flask.request.form.getlist('impacts')]
+        include_high_impact = flask.request.form.getlist('impacts')
         if len(include_high_impact)==0:
             errors.append('Missing variant impact type')
     except ValueError:
@@ -66,16 +74,16 @@ def process():
 
     # population filter
     try:
-        filter_af_pop = [i.encode('utf-8') for i in flask.request.form.getlist('filter_af_pop')]
+        filter_af_pop = flask.request.form.getlist('filter_af_pop')
         if len(filter_af_pop)==0:
             errors.append('Invalid population name')
     except ValueError:
-        flask.render_template('main.html', errors=['Invalid population name'])
+        flask.render_template('main.html', errors=['Invalid population name'], form=flask.request.form)
         # errors.append('Invalid population name')
 
     # check filter popultaion names?
     if not set(filter_af_pop).issubset(set(['exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'])):
-         flask.render_template('main.html', errors=['Invalid population name'])
+         flask.render_template('main.html', errors=['Invalid population name'], form=flask.request.form)
     # filter AF value
     try:
         filter_af_value = float(flask.request.form['filter_af_value'])
@@ -123,11 +131,12 @@ def process():
         # print population_filter
 
         # find matching genes
-        matches = query_db(
-            "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
+        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
                 filter_type,
                 additional_filter,
-                population_filter),
+                population_filter)
+        matches = query_db(
+                query,
                 sql_parameters,
                 one=True)
 
@@ -158,6 +167,32 @@ def process():
     else:
         return flask.render_template('main.html', errors=errors, form=flask.request.form)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+def generate_id():
+    return str(uuid.uuid4())
+
+def process_upload():
+    errors = []
+    if 'vcf' not in flask.request.files:
+        errors.append('Please specify a file')
+        return flask.render_template('upload.html', errors=errors, form=flask.request.form)
+
+    vcf_file = flask.request.files['vcf']
+    # if user does not select file, browser also
+    # submit a empty part without filename
+    if vcf_file.filename == '':
+        errors.append('No selected file')
+        return flask.render_template('upload.html', errors=errors, form=flask.request.form)
+
+    if vcf_file and allowed_file(vcf_file.filename):
+        job_id = generate_id()
+        vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
+        # start processing
+        runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
+        return flask.redirect(flask.url_for('process_vcf', job=job_id))
+
 ### front end
 @app.route('/', methods=['GET', 'POST'])
 def main():
@@ -165,10 +200,35 @@ def main():
         main entry point
     '''
     if flask.request.method == 'POST':
-        print("in post")
         return process()
     else:
         return flask.render_template('main.html', form=flask.request.form)
+
+@app.route('/vcf_result/<job>')
+def vcf_result(job):
+    status = runner.job_status(RUNNER_DB, job)
+    if status is None:
+        return flask.render_template('upload.html', form=flask.request.form)
+    else:
+        data = open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r').readlines()
+        return flask.render_template('vcf_result.html', job=job, data=data)
+
+@app.route('/process_vcf/<job>')
+def process_vcf(job):
+    status = runner.job_status(RUNNER_DB, job)
+    if status is None:
+        return flask.render_template('upload.html', form=flask.request.form)
+    elif status['status'] == 'F':
+        return flask.redirect(flask.url_for("vcf_result", job=job))
+    else:
+        return flask.render_template('process_vcf.html', job=job, status=status)
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if flask.request.method == 'POST':
+        return process_upload()
+    else:
+        return flask.render_template('upload.html', form=flask.request.form)
 
 @app.route('/about')
 def about():
