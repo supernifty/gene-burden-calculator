@@ -66,8 +66,8 @@ def process():
 
     # check filter types options
     try:
-        include_high_impact = flask.request.form.getlist('impacts')
-        if len(include_high_impact)==0:
+        include_impacts = flask.request.form.getlist('impacts')
+        if len(include_impacts)==0:
             errors.append('Missing variant impact type')
     except ValueError:
         errors.append('Missing variant impact type')
@@ -114,12 +114,12 @@ def process():
 
         # additional
         additional_filter = " and ("
-        if len(include_high_impact)>0:
-            for impact in include_high_impact[:-1]:
+        if len(include_impacts)>0:
+            for impact in include_impacts[:-1]:
                 additional_filter += (" impact = ? or ")
                 sql_parameters.append(impact)
             additional_filter += (" impact = ? ")
-            sql_parameters.append(include_high_impact[-1])
+            sql_parameters.append(include_impacts[-1])
         additional_filter += ")"
 
         # population filter for a list of selected populations
@@ -156,7 +156,7 @@ def process():
             filter_af_pop=','.join(filter_af_pop),
             filter_af_value=filter_af_value,
             cases=cases,
-            include_high_impact=','.join(include_high_impact),
+            include_impacts=','.join(include_impacts),
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
