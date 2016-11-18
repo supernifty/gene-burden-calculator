@@ -128,13 +128,14 @@ def process():
             for pop_value in filter_af_pop:
                 population_filter += (" and exac.{} < ?").format(pop_value)
                 sql_parameters.append(filter_af_value)
-        print additional_filter + " " + population_filter
 
         # find matching genes
-        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
+        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? or exac.{} is null) {} {}".format(
+                filter_type,
                 filter_type,
                 additional_filter,
                 population_filter)
+        print query
         matches = query_db(
                 query,
                 sql_parameters,
@@ -146,7 +147,7 @@ def process():
                 'z_test': statistics[0], 'binomial_test': statistics[1], 'relative_risk': statistics[2], 'rr_conf_interval': statistics[3]})
         else:
             # gene is no good
-            warnings.append( 'Gene "{}" had no matches'.format(fields[0]))
+            warnings.append( 'Gene "{}" or variants not found in the selected database'.format(fields[0]))
 
     if len(errors) == 0:
         return flask.render_template('results.html',
