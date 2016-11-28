@@ -8,7 +8,10 @@
     <title>BurGene</title>
 
     <!-- Bootstrap -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"> -->
+    <!-- simplex  -->
+    <!-- <link href="https://bootswatch.com/simplex/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="static/bootstrap.min.css" rel="stylesheet">
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -27,7 +30,8 @@
   </head>
   <body>
 
-    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <!-- <nav class="navbar navbar-inverse navbar-fixed-top"> -->
+      <nav class="navbar navbar-default">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -49,20 +53,18 @@
     </nav>
 
     <div class="container">
-      <div class="row">
-        <h2>About BurGene</h2>
+        <h3>About BurGene</h3>
         <p>
-          BurGene is a tool for prioritizing genes based on the number of observed mutations.
+          BurGene is a tool for prioritizing genes based on the number of observed genetic variants.
         </p>
         <p>
-          BurGene calculates the difference between the frequencies of observed gene variants in cases and a reference population
-          such as the Exome Aggregation Consoritum (<a href="http://exac.broadinstitute.org">ExAC</a>). The current version provides data from
-          the ExAC population, with more refernce data from TCGA coming soon.
+          BurGene calculates the difference between the frequencies of selected variants in cases and reference populations
+          such as the Exome Aggregation Consoritum (<a href="http://exac.broadinstitute.org">ExAC</a>). The current version provides reference data
+          from ExAC populations, with more refernce data from TCGA coming soon.
         </p>
         <p>
           Methods:<br>
-
-          The tools provides a pipeline that starts with preparing a VCF file for analysis by annotation and predicting variant
+          The BurGene tools provides a pipeline that starts with preparing a VCF file for analysis by annotation and predicting variant
           impact using in-silico prediction methods. Next, we apply user specified variant level filters and based on the remaining variants
           calculate gene level burden of likely intereresting variants for further analysis. The same filters are then applied to the reference population
           data to form equivalent gene burdens.
@@ -74,16 +76,17 @@
         <p>
           Example usage:<br>
 
-          We have germline exome data from 700 patients.
+          You have germline exome data from 700 patients.
+          You employed a standard variant calling pipeline (based on GATK) to call variants using hg19 as reference.
+          The resulting variants are stored in a vcf file.
 
-          We employed a standard variant calling pipeline (based on GATK) to call variants using hg19 as reference.
+          You are interested in rare deleterious variants that are putatively associated to the phenotype.
+
 
           atm 16/700 v 72/53105 0.001 and condel>0.8
 
         </p>
-      </div>
     </div><!-- /.container -->
-
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

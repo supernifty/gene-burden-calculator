@@ -8,7 +8,10 @@
     <title>BurGene</title>
 
     <!-- Bootstrap -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"> -->
+    <!-- simplex  -->
+    <!-- <link href="https://bootswatch.com/simplex/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="static/bootstrap.min.css" rel="stylesheet">
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -27,7 +30,8 @@
   </head>
   <body>
 
-    <nav class="navbar navbar-inverse navbar-fixed-top">
+    <!-- <nav class="navbar navbar-inverse navbar-fixed-top"> -->
+    <nav class="navbar navbar-default">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -50,7 +54,7 @@
 
     <div class="container">
       <div>
-        <h1>Burden Calculation Results</h1>
+        <h3>Results</h3>
 
         <div class="alert alert-success" role="alert">
             Showing results from <strong>{{ cases }} cases</strong> with <strong>{{ filter_type }} &le; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.
@@ -77,8 +81,8 @@
           <thead>
             <tr>
               <th>Gene</th>
-              <th>Burden</th>
-              <th>ExAC Matches</th>
+              <th>Cases</th>
+              <th>Reference</th>
               <th>Protein Length</th>
               <th>Z test p-value</th>
               <th>Binomial test p-value</th>
