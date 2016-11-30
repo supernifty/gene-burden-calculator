@@ -66,8 +66,8 @@ def process():
 
     # check filter types options
     try:
-        include_high_impact = flask.request.form.getlist('impacts')
-        if len(include_high_impact)==0:
+        include_impacts = flask.request.form.getlist('impacts')
+        if len(include_impacts)==0:
             errors.append('Missing variant impact type')
     except ValueError:
         errors.append('Missing variant impact type')
@@ -114,12 +114,12 @@ def process():
 
         # additional
         additional_filter = " and ("
-        if len(include_high_impact)>0:
-            for impact in include_high_impact[:-1]:
+        if len(include_impacts)>0:
+            for impact in include_impacts[:-1]:
                 additional_filter += (" impact = ? or ")
                 sql_parameters.append(impact)
             additional_filter += (" impact = ? ")
-            sql_parameters.append(include_high_impact[-1])
+            sql_parameters.append(include_impacts[-1])
         additional_filter += ")"
 
         # population filter for a list of selected populations
@@ -128,13 +128,14 @@ def process():
             for pop_value in filter_af_pop:
                 population_filter += (" and exac.{} < ?").format(pop_value)
                 sql_parameters.append(filter_af_value)
-        # print population_filter
 
         # find matching genes
-        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and exac.{} >= ? {} {}".format(
+        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? or exac.{} is null) {} {}".format(
+                filter_type,
                 filter_type,
                 additional_filter,
                 population_filter)
+        print query
         matches = query_db(
                 query,
                 sql_parameters,
@@ -146,7 +147,7 @@ def process():
                 'z_test': statistics[0], 'binomial_test': statistics[1], 'relative_risk': statistics[2], 'rr_conf_interval': statistics[3]})
         else:
             # gene is no good
-            warnings.append( 'Gene "{}" had no matches'.format(fields[0]))
+            warnings.append( 'Gene "{}" or variants not found in the selected database'.format(fields[0]))
 
     if len(errors) == 0:
         return flask.render_template('results.html',
@@ -156,7 +157,7 @@ def process():
             filter_af_pop=','.join(filter_af_pop),
             filter_af_value=filter_af_value,
             cases=cases,
-            include_high_impact=','.join(include_high_impact),            
+            include_impacts=','.join(include_impacts),
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
