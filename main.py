@@ -135,7 +135,6 @@ def process():
                 filter_type,
                 additional_filter,
                 population_filter)
-        print query
         matches = query_db(
                 query,
                 sql_parameters,
