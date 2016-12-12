@@ -12,8 +12,8 @@ python app.py
 # Docker
 Docker image is currently untested.
 ```
-docker build -t exac-burden:latest .
-docker run -d -p 5000:5000 exac-burden:latest
+docker build -t burgene:latest .
+docker run -d -p 5000:5000 burgene:latest
 ```
 
 # Building the db

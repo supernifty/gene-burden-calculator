@@ -5,10 +5,12 @@
 
 import flask
 import os
+import json
 import sqlite3
 import uuid
 
 import calculate
+import helpers
 import runner
 
 DB = "./exac.db"
@@ -18,8 +20,12 @@ EXAC_POPULATION = 53105.0
 UPLOAD_FOLDER = './uploads'
 ALLOWED_EXTENSIONS = set(['vcf'])
 
+# output from annotation tool
+OUTPUT_FIELDS = ['gene', 'chrom', 'start', 'end', 'ref', 'alt', 'impact', 'impact_type', 'allele_count', 'allele_number', 'exac_all_pop_ac', 'exac_all_pop_an', 'exac_all_pop', 'exac_african_ac', 'exac_african_an', 'exac_african', 'exac_latino_ac', 'exac_latino_an', 'exac_latino', 'exac_east_asian_ac', 'exac_east_asian_an', 'exac_east_asian', 'exac_fin_ac', 'exac_fin_an', 'exac_fin', 'exac_nonfin_eur_ac', 'exac_nonfin_eur_anexac_nonfin_eur', 'exac_south_asian_ac', 'exac_south_asian_an', 'exac_south_asian', 'exac_other_ac', 'exac_other_ac', 'exac_other', 'sift', 'polyphen', 'condel_score', 'cadd']
+
 app = flask.Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 * 1024 # 1G
 
 ### database access
 def db():
@@ -43,53 +49,19 @@ def close_connection(exception):
 ### business logic
 def process():
     '''
-        analysis
+        analysis when details provided as gene/burden
     '''
-    errors = []
 
-    # case count
-    try:
-        cases = int(flask.request.form['cases'])
-        if cases <= 0:
-            errors.append('Number of cases must be greater than zero')
-    except ValueError:
-            errors.append('Number of cases must be numeric')
+    # is it the vcf?
+    if flask.request.files['vcf'] is not None and flask.request.files['vcf'].filename is not None and flask.request.files['vcf'].filename != '':
+        return process_upload()
 
-    # parse overall settings - filtering
-    filter_type = flask.request.form['filter_type']
-    if filter_type not in ('cadd', 'condel', 'sift', 'polyphen'):
-        flask.render_template('main.html', errors=['Invalid filter type'], form=flask.request.form)
-    try:
-        filter_value = float(flask.request.form['filter_value'])
-    except ValueError:
-        errors.append('Filter value must be numeric')
+    # it's the csv
+    settings = helpers.parse_settings(flask.request.form)
 
-    # check filter types options
-    try:
-        include_impacts = flask.request.form.getlist('impacts')
-        if len(include_impacts)==0:
-            errors.append('Missing variant impact type')
-    except ValueError:
-        errors.append('Missing variant impact type')
-
-    # population filter
-    try:
-        filter_af_pop = flask.request.form.getlist('filter_af_pop')
-        if len(filter_af_pop)==0:
-            errors.append('Invalid population name')
-    except ValueError:
-        flask.render_template('main.html', errors=['Invalid population name'], form=flask.request.form)
-        # errors.append('Invalid population name')
-
-    # check filter popultaion names?
-    if not set(filter_af_pop).issubset(set(['exac_all', 'exac_african', 'exac_latino', 'exac_east_asian', 'exac_fin', 'exac_nonfin_eur', 'exac_south_asian', 'exac_other'])):
-         flask.render_template('main.html', errors=['Invalid population name'], form=flask.request.form)
-    # filter AF value
-    try:
-        filter_af_value = float(flask.request.form['filter_af_value'])
-    except ValueError:
-        errors.append('Filter allele frequency must be numeric')
-
+    if len(settings['errors']) > 0:
+        flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
+    
     # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
 
@@ -98,65 +70,38 @@ def process():
     for line, burden in enumerate(burdens):
         fields = burden.strip().split(',')
         if len(fields) != 2:
-            errors.append('Incorrect burden format on line {}'.format(line + 1))
+            settings['errors'].append('Incorrect burden format on line {}'.format(line + 1))
             continue
 
         try:
             case_burden = float(fields[1])
             if case_burden <= 0:
-                errors.append('Incorrect burden format on line {}: burden count {} is less than 0'.format(line + 1, fields[1]))
+                settings['errors'].append('Incorrect burden format on line {}: burden count {} is less than 0'.format(line + 1, fields[1]))
                 continue
         except ValueError:
-            errors.append('Incorrect burden format on line {}: burden count "{}" is not numeric'.format(line + 1, fields[1]))
+            settings['errors'].append('Incorrect burden format on line {}: burden count "{}" is not numeric'.format(line + 1, fields[1]))
             continue
 
-        sql_parameters = [fields[0], filter_value]
-
-        # additional
-        additional_filter = " and ("
-        if len(include_impacts)>0:
-            for impact in include_impacts[:-1]:
-                additional_filter += (" impact = ? or ")
-                sql_parameters.append(impact)
-            additional_filter += (" impact = ? ")
-            sql_parameters.append(include_impacts[-1])
-        additional_filter += ")"
-
-        # population filter for a list of selected populations
-        population_filter = ''
-        if filter_af_pop:
-            for pop_value in filter_af_pop:
-                population_filter += (" and exac.{} < ?").format(pop_value)
-                sql_parameters.append(filter_af_value)
-
-        # find matching genes
-        query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? or exac.{} is null) {} {}".format(
-                filter_type,
-                filter_type,
-                additional_filter,
-                population_filter)
-        matches = query_db(
-                query,
-                sql_parameters,
-                one=True)
+        # --- determine exac count for this gene
+        matches = helpers.get_exac_detail(query_db=query_db, gene=fields[0], settings=settings)
 
         if matches[1] is not None:
-            statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=cases, population_burden=matches[0], total_population=EXAC_POPULATION)
+            statistics = calculate.calculate_burden_statistics(case_burden=case_burden, total_cases=settings['cases'], population_burden=matches[0], total_population=EXAC_POPULATION)
             result.append({'gene': fields[0], 'burden': fields[1], 'matches': matches[0], 'protein_length': matches[1], \
                 'z_test': statistics[0], 'binomial_test': statistics[1], 'relative_risk': statistics[2], 'rr_conf_interval': statistics[3]})
         else:
             # gene is no good
             warnings.append( 'Gene "{}" or variants not found in the selected database'.format(fields[0]))
 
-    if len(errors) == 0:
+    if len(settings['errors']) == 0:
         return flask.render_template('results.html',
             result=result,
-            filter_type=filter_type,
-            filter_value=filter_value,
-            filter_af_pop=','.join(filter_af_pop),
-            filter_af_value=filter_af_value,
-            cases=cases,
-            include_impacts=','.join(include_impacts),
+            filter_type=settings['filter_type'],
+            filter_value=settings['filter_value'],
+            filter_af_pop=','.join(settings['filter_af_pop']),
+            filter_af_value=settings['filter_af_value'],
+            cases=settings['cases'],
+            include_impacts=','.join(settings['include_impacts']),
             gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
             protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
@@ -165,7 +110,7 @@ def process():
             warnings = warnings
         )
     else:
-        return flask.render_template('main.html', errors=errors, form=flask.request.form)
+        return flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
@@ -174,24 +119,41 @@ def generate_id():
     return str(uuid.uuid4())
 
 def process_upload():
+    '''
+        adds the annotation job to the queue
+    '''
     errors = []
     if 'vcf' not in flask.request.files:
         errors.append('Please specify a file')
-        return flask.render_template('upload.html', errors=errors, form=flask.request.form)
+        return flask.render_template('main.html', errors=errors, form=flask.request.form)
 
     vcf_file = flask.request.files['vcf']
     # if user does not select file, browser also
     # submit a empty part without filename
     if vcf_file.filename == '':
         errors.append('No selected file')
-        return flask.render_template('upload.html', errors=errors, form=flask.request.form)
+        return flask.render_template('main.html', errors=errors, form=flask.request.form)
 
-    if vcf_file and allowed_file(vcf_file.filename):
-        job_id = generate_id()
-        vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
-        # start processing
-        runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
-        return flask.redirect(flask.url_for('process_vcf', job=job_id))
+    if not allowed_file(vcf_file.filename):
+        errors.append('Invalid file extension')
+        return flask.render_template('main.html', errors=errors, form=flask.request.form)
+
+    settings = helpers.parse_settings(flask.request.form)
+
+    if len(settings['errors']) > 0:
+        return flask.render_template('main.html', errors=errors, form=flask.request.form)
+
+    # looks ok
+
+    job_id = generate_id()
+    vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
+
+    # start processing
+    runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
+    redirect = flask.redirect(flask.url_for('process_vcf', job=job_id))
+    response = flask.current_app.make_response(redirect)  
+    response.set_cookie('settings', value=json.dumps(settings))
+    return response
 
 ### front end
 @app.route('/', methods=['GET', 'POST'])
@@ -204,31 +166,75 @@ def main():
     else:
         return flask.render_template('main.html', form=flask.request.form)
 
-@app.route('/vcf_result/<job>')
+@app.route('/vcf_result/<job>/')
 def vcf_result(job):
+    '''
+        redirected to this after annotation has finished
+    '''
     status = runner.job_status(RUNNER_DB, job)
-    if status is None:
-        return flask.render_template('upload.html', form=flask.request.form)
-    else:
-        data = open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r').readlines()
-        return flask.render_template('vcf_result.html', job=job, data=data)
+    if status is None: # no output
+        return flask.render_template('main.html', form=flask.request.form)
 
-@app.route('/process_vcf/<job>')
+    # determine counts for genes
+    settings_str = flask.request.cookies.get('settings')
+    settings = json.loads(settings_str)
+    result = []
+    warnings = []
+    current = [None, 0]
+    for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
+        fields = line.strip('\n').split('\t')
+        if current[0] == fields[0]: # same gene
+            current[1] += 1 # TODO
+        else: # new gene
+            if current[0] is not None:
+                matches = helpers.get_exac_detail(query_db=query_db, gene=current[0], settings=settings)
+                if matches[1] is not None:
+                    statistics = calculate.calculate_burden_statistics(case_burden=current[1], total_cases=settings['cases'], population_burden=matches[0], total_population=EXAC_POPULATION)
+                    result.append({'gene': current[0], 'burden': current[1], 'matches': matches[0], 'protein_length': matches[1], \
+                        'z_test': statistics[0], 'binomial_test': statistics[1], 'relative_risk': statistics[2], 'rr_conf_interval': statistics[3]})
+                else:
+                    # gene is no good
+                    warnings.append( 'Gene "{}" or variants not found in the selected database'.format(current[0]))
+            # start counting new gene
+            current = [fields[0], 1] # TODO
+    if current[1] > 0:
+        matches = helpers.get_exac_detail(query_db=query_db, gene=current[0], settings=settings)
+        if matches[1] is not None:
+            statistics = calculate.calculate_burden_statistics(case_burden=current[1], total_cases=settings['cases'], population_burden=matches[0], total_population=EXAC_POPULATION)
+            result.append({'gene': current[0], 'burden': current[1], 'matches': matches[0], 'protein_length': matches[1], \
+                'z_test': statistics[0], 'binomial_test': statistics[1], 'relative_risk': statistics[2], 'rr_conf_interval': statistics[3]})
+        else:
+            # gene is no good
+            warnings.append( 'Gene "{}" or variants not found in the selected database'.format(current[0]))
+
+    return flask.render_template('results.html',
+        result=result,
+        filter_type=settings['filter_type'],
+        filter_value=settings['filter_value'],
+        filter_af_pop=','.join(settings['filter_af_pop']),
+        filter_af_value=settings['filter_af_value'],
+        cases=settings['cases'],
+        include_impacts=','.join(settings['include_impacts']),
+        gene_list = ','.join(["'{}'".format(item['gene'].replace("'", "\\'")) for item in result if item['protein_length'] is not None]),
+        protein_lengths = ','.join([ str(item['protein_length']) for item in result if item['protein_length'] is not None]),
+        binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
+        relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
+        rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
+        warnings = warnings
+    )
+
+@app.route('/process_vcf/<job>/')
 def process_vcf(job):
+    '''
+        wait for the annotation job to finish by continually checking the job status
+    '''
     status = runner.job_status(RUNNER_DB, job)
     if status is None:
-        return flask.render_template('upload.html', form=flask.request.form)
-    elif status['status'] == 'F':
+        return flask.render_template('main.html', form=flask.request.form)
+    elif status['status'] == 'F': # finished
         return flask.redirect(flask.url_for("vcf_result", job=job))
-    else:
+    else: # still in progress
         return flask.render_template('process_vcf.html', job=job, status=status)
-
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if flask.request.method == 'POST':
-        return process_upload()
-    else:
-        return flask.render_template('upload.html', form=flask.request.form)
 
 @app.route('/about')
 def about():

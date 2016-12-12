@@ -70,7 +70,7 @@
         </div>
         {% endif %}
 
-        <form id="burgeneForm" method="POST" action="/">
+        <form id="burgeneForm" method="POST" action="/" enctype="multipart/form-data">
           <div class="row">
             <div class="form-group col-lg-4">
               <label for="cases" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter number of cases (samples) in your study">Number of cases</label>
@@ -127,6 +127,13 @@
             <div class="form-group col-lg-12">
               <label for="burdens" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">Cases: genes and variants</label>
               <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group col-lg-12">
+              <label for="upload">Upload VCF File</label>
+              <input type="file" name="vcf" id="upload">
             </div>
           </div>
 
