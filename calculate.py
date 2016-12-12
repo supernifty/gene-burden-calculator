@@ -42,8 +42,9 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     case_proportion = 1.0 * case_burden / total_cases
     population_proportion = 1.0 * population_burden / total_population
 
-    if case_burden > total_cases:
-        case_burden = total_cases # TODO hack
+    # A hack to fix error x(burden) > n (cases) error in the bionomial test
+    #if case_burden > total_cases:
+    #    case_burden = total_cases # TODO hack
 
     # z proportion test
     psp = ((case_proportion * total_cases) + (population_proportion * total_population)) / (total_cases + total_population)
