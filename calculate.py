@@ -55,8 +55,8 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     z_test_p_value = 2 * scipy.stats.norm.sf(abs(z_score))
 
     # binomial test
-    obs = [[case_burden, (total_cases - case_burden)], [population_burden, (total_population - population_burden)]]
-    binomial_z_score, binomial_pval, binomial_dof, binomial_expected = scipy.stats.chi2_contingency(obs, correction=True)
+    #obs = [[case_burden, (total_cases - case_burden)], [population_burden, (total_population - population_burden)]]
+    #binomial_z_score, binomial_pval, binomial_dof, binomial_expected = scipy.stats.chi2_contingency(obs, correction=True)
 
     # p-value from binomial test
     binomial_p_value = statsmodels.stats.proportion.binom_test(case_burden, total_cases, prop=population_proportion, alternative="two-sided")
