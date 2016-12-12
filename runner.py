@@ -2,7 +2,7 @@
 '''
   simple queueing job manager
 
-  statuses: A=available, R=running, F=finished
+  statuses: A=available, R=running, F=finished, D=deleted
 '''
 
 import argparse
@@ -75,13 +75,44 @@ def create(db_file):
     # generate schema if not already present
     db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char)''')
 
+def cleanup(db_file, min_age=12):
+    '''
+       remove old files
+    '''
+    required = (datetime.datetime.now() - datetime.timedelta(hours=min_age)).timestamp()
+    log('INFO', 'finding files older than {}...'.format(required))
+    removed = 0
+    db = sqlite3.connect(db_file)
+    files = query_db(db, '''select rowid, input, output from job where status = "F"''', [], one=False)
+    for candidates in files:
+        if os.path.exists(candidates[1]):
+            modified = os.path.getmtime(candidates[1])
+            if modified < required:
+                log('DEBUG', 'removing {}...'.format(candidates[1]))
+                os.remove(candidates[1])
+                removed += 1
+                log('DEBUG', 'removing {}: done'.format(candidates[1]))
+                if os.path.exists(candidates[2]):
+                    log('DEBUG', 'removing {}...'.format(candidates[2]))
+                    os.remove(candidates[2])
+                    removed += 1
+                    log('DEBUG', 'removing {}: done'.format(candidates[2]))
+                db.execute('''update job set status = 'D' where rowid = ?''', (candidates[0],)) # D = Deleted
+                db.commit()
+            else:
+                log('DEBUG', 'keeping {} with modified {}...'.format(candidates[1], modified))
+    log('INFO', 'finding old files: removed {}'.format(removed))
+    
+
 def main():
+    global DEBUG
     parser = argparse.ArgumentParser(description='Update job status database')
     parser.add_argument('--db', required=True, help='target database')
     parser.add_argument('--sleep', required=False, type=int, help='repeatedly update the database every sleep seconds')
     parser.add_argument('--debug', required=False, default=False, action='store_true', help='write additional debugging info')
     parser.add_argument('--input', required=False, help='input file')
     parser.add_argument('--output', required=False, help='output file')
+    parser.add_argument('--cleanup', required=False, type=int, default=24, help='cleanup files older than this many hours')
     args = parser.parse_args()
     DEBUG = args.debug
 
@@ -91,14 +122,19 @@ def main():
         add_to_queue(args.db, "test_job", args.input, args.output)
 
     if args.sleep:
+        count = 0
         while True:
             try:
                 run_queue(args.db)
+                if count % 10 == 0:
+                    cleanup(args.db, args.cleanup)
             except Exception as err:
                 traceback.print_exc()
+            count += 1
             time.sleep(args.sleep)
     else:
         run_queue(args.db)
+        cleanup(args.db, args.cleanup)
 
 if __name__ == '__main__':
   main()
