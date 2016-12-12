@@ -80,7 +80,7 @@ def cleanup(db_file, min_age=12):
        remove old files
     '''
     required = (datetime.datetime.now() - datetime.timedelta(hours=min_age)).timestamp()
-    log('INFO', 'finding files older than {}...'.format(required))
+    log('DEBUG', 'finding files older than {}...'.format(required))
     removed = 0
     db = sqlite3.connect(db_file)
     files = query_db(db, '''select rowid, input, output from job where status = "F"''', [], one=False)
@@ -88,20 +88,20 @@ def cleanup(db_file, min_age=12):
         if os.path.exists(candidates[1]):
             modified = os.path.getmtime(candidates[1])
             if modified < required:
-                log('DEBUG', 'removing {}...'.format(candidates[1]))
+                log('INFO', 'removing {}...'.format(candidates[1]))
                 os.remove(candidates[1])
                 removed += 1
-                log('DEBUG', 'removing {}: done'.format(candidates[1]))
+                log('INFO', 'removing {}: done'.format(candidates[1]))
                 if os.path.exists(candidates[2]):
-                    log('DEBUG', 'removing {}...'.format(candidates[2]))
+                    log('INFO', 'removing {}...'.format(candidates[2]))
                     os.remove(candidates[2])
                     removed += 1
-                    log('DEBUG', 'removing {}: done'.format(candidates[2]))
+                    log('INFO', 'removing {}: done'.format(candidates[2]))
                 db.execute('''update job set status = 'D' where rowid = ?''', (candidates[0],)) # D = Deleted
                 db.commit()
             else:
                 log('DEBUG', 'keeping {} with modified {}...'.format(candidates[1], modified))
-    log('INFO', 'finding old files: removed {}'.format(removed))
+    log('DEBUG', 'finding old files: removed {}'.format(removed))
     
 
 def main():

@@ -173,7 +173,7 @@ def vcf_result(job):
     '''
     status = runner.job_status(RUNNER_DB, job)
     if status is None: # no output
-        return flask.render_template('main.html', form=flask.request.form)
+        return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
 
     # determine counts for genes
     settings_str = flask.request.cookies.get('settings')
