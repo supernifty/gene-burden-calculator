@@ -20,7 +20,6 @@
 
     <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.12/css/jquery.dataTables.css">
 
-
     <style>
     body {
       padding-top: 50px;
@@ -40,7 +39,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">BurGene</a>
+          <a class="navbar-brand" href="/">BurGene<text style="font-size:10px">beta</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -99,8 +98,8 @@
               <td>{{ item.protein_length }}</td>
               <td>{{ '{0:0.3e}'.format(item.z_test) }}</td>
               <td>{{ '{0:0.3e}'.format(item.binomial_test) }}</td>
-              <td>{{ '{0:0.3e}'.format(item.relative_risk) }}</td>
-              <td>{{ item.rr_conf_interval }}</td>
+              <td>{{ '{0:0.2f}'.format(item.relative_risk) }}</td>
+              <td>{{ '-'.join(['{0:0.1f}'.format(item.rr_conf_interval[0]), '{0:0.1f}'.format(item.rr_conf_interval[1])]) }}</td>
             </tr>
             {% endfor %}
           </tbody>

@@ -41,9 +41,10 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
 
     case_proportion = 1.0 * case_burden / total_cases
     population_proportion = 1.0 * population_burden / total_population
-    
-    if case_burden > total_cases:
-        case_burden = total_cases # TODO hack
+
+    # A hack to fix error x(burden) > n (cases) error in the bionomial test
+    #if case_burden > total_cases:
+    #    case_burden = total_cases # TODO hack
 
     # z proportion test
     psp = ((case_proportion * total_cases) + (population_proportion * total_population)) / (total_cases + total_population)
@@ -59,9 +60,9 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     #binomial_z_score, binomial_pval, binomial_dof, binomial_expected = scipy.stats.chi2_contingency(obs, correction=True)
 
     # p-value from binomial test
-    binomial_p_value = statsmodels.stats.proportion.binom_test(case_burden, total_cases, prop=population_proportion, alternative="two-sided")
+    binomial_p_value = statsmodels.stats.proportion.binom_test([case_burden, total_cases], None, prop=population_proportion, alternative="two-sided")
 
-    # calculate relative risk and associated confdence interval    
+    # calculate relative risk and associated confdence interval
     relative_risk = (case_burden/(case_burden+total_cases))/(population_burden/(population_burden+total_population))
     standard_error = np.sqrt((1.0/case_burden) + (1.0/population_burden) - (1.0/(case_burden+total_cases)) - (1.0/(population_burden+total_population)))
     rr_conf_interval = get_confidence_interval(relative_risk, standard_error)
