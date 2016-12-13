@@ -20,9 +20,6 @@ EXAC_POPULATION = 53105.0
 UPLOAD_FOLDER = './uploads'
 ALLOWED_EXTENSIONS = set(['vcf'])
 
-# output from annotation tool
-OUTPUT_FIELDS = ['gene', 'chrom', 'start', 'end', 'ref', 'alt', 'impact', 'impact_type', 'allele_count', 'allele_number', 'exac_all_pop_ac', 'exac_all_pop_an', 'exac_all_pop', 'exac_african_ac', 'exac_african_an', 'exac_african', 'exac_latino_ac', 'exac_latino_an', 'exac_latino', 'exac_east_asian_ac', 'exac_east_asian_an', 'exac_east_asian', 'exac_fin_ac', 'exac_fin_an', 'exac_fin', 'exac_nonfin_eur_ac', 'exac_nonfin_eur_anexac_nonfin_eur', 'exac_south_asian_ac', 'exac_south_asian_an', 'exac_south_asian', 'exac_other_ac', 'exac_other_ac', 'exac_other', 'sift', 'polyphen', 'condel_score', 'cadd']
-
 app = flask.Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 * 1024 # 1G
@@ -150,9 +147,9 @@ def process_upload():
 
     # start processing
     runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
-    redirect = flask.redirect(flask.url_for('process_vcf', job=job_id))
+    redirect = flask.redirect(flask.url_for('process_vcf', job=job_id, settings=json.dumps(settings)))
     response = flask.current_app.make_response(redirect)  
-    response.set_cookie('settings', value=json.dumps(settings))
+    #response.set_cookie('settings', value=json.dumps(settings))
     return response
 
 ### front end
@@ -166,8 +163,8 @@ def main():
     else:
         return flask.render_template('main.html', form=flask.request.form)
 
-@app.route('/vcf_result/<job>/')
-def vcf_result(job):
+@app.route('/vcf_result/<job>/<settings>/')
+def vcf_result(job, settings):
     '''
         redirected to this after annotation has finished
     '''
@@ -176,17 +173,21 @@ def vcf_result(job):
         return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
 
     # determine counts for genes
-    settings_str = flask.request.cookies.get('settings')
-    settings = json.loads(settings_str)
+    #settings_str = flask.request.cookies.get('settings')
+    settings = json.loads(settings)
     result = []
     warnings = []
     current = [None, 0]
+    first = True
     for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
+        if first: # skip header
+            first = False
+            continue
         fields = line.strip('\n').split('\t')
         if current[0] == fields[0]: # same gene
-            current[1] += 1 # TODO
+            current[1] += helpers.get_vcf_match(fields, settings)
         else: # new gene
-            if current[0] is not None:
+            if current[0] is not None and current[1] > 0: # an actual gene
                 matches = helpers.get_exac_detail(query_db=query_db, gene=current[0], settings=settings)
                 if matches[1] is not None:
                     statistics = calculate.calculate_burden_statistics(case_burden=current[1], total_cases=settings['cases'], population_burden=matches[0], total_population=EXAC_POPULATION)
@@ -196,7 +197,7 @@ def vcf_result(job):
                     # gene is no good
                     warnings.append( 'Gene "{}" or variants not found in the selected database'.format(current[0]))
             # start counting new gene
-            current = [fields[0], 1] # TODO
+            current = [fields[0], helpers.get_vcf_match(fields, settings)]
     if current[1] > 0:
         matches = helpers.get_exac_detail(query_db=query_db, gene=current[0], settings=settings)
         if matches[1] is not None:
@@ -223,8 +224,8 @@ def vcf_result(job):
         warnings = warnings
     )
 
-@app.route('/process_vcf/<job>/')
-def process_vcf(job):
+@app.route('/process_vcf/<job>/<settings>')
+def process_vcf(job, settings):
     '''
         wait for the annotation job to finish by continually checking the job status
     '''
@@ -232,9 +233,9 @@ def process_vcf(job):
     if status is None:
         return flask.render_template('main.html', form=flask.request.form)
     elif status['status'] == 'F': # finished
-        return flask.redirect(flask.url_for("vcf_result", job=job))
+        return flask.redirect(flask.url_for("vcf_result", job=job, settings=settings))
     else: # still in progress
-        return flask.render_template('process_vcf.html', job=job, status=status)
+        return flask.render_template('process_vcf.html', job=job, settings=settings, status=status)
 
 @app.route('/about')
 def about():
