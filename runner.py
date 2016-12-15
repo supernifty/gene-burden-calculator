@@ -112,7 +112,7 @@ def main():
     parser.add_argument('--debug', required=False, default=False, action='store_true', help='write additional debugging info')
     parser.add_argument('--input', required=False, help='input file')
     parser.add_argument('--output', required=False, help='output file')
-    parser.add_argument('--cleanup', required=False, type=int, default=24, help='cleanup files older than this many hours')
+    parser.add_argument('--cleanup', required=False, type=int, default=24*7, help='cleanup files older than this many hours')
     args = parser.parse_args()
     DEBUG = args.debug
 
