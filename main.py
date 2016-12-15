@@ -104,7 +104,8 @@ def process():
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
             relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
             rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
-            warnings = warnings
+            warnings = warnings,
+            is_vcf = False
         )
     else:
         return flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
@@ -143,13 +144,14 @@ def process_upload():
     # looks ok
 
     job_id = generate_id()
-    vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
+    filename = os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id))
+    vcf_file.save(filename)
+    file_size = os.stat(filename).st_size
 
     # start processing
-    runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
+    runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)), file_size)
     redirect = flask.redirect(flask.url_for('process_vcf', job=job_id, settings=json.dumps(settings)))
     response = flask.current_app.make_response(redirect)  
-    #response.set_cookie('settings', value=json.dumps(settings))
     return response
 
 ### front end
@@ -173,7 +175,6 @@ def vcf_result(job, settings):
         return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
 
     # determine counts for genes
-    #settings_str = flask.request.cookies.get('settings')
     settings = json.loads(settings)
     result = []
     warnings = []
@@ -221,7 +222,8 @@ def vcf_result(job, settings):
         binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
         relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
         rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
-        warnings = warnings
+        warnings = warnings,
+        is_vcf = True
     )
 
 @app.route('/process_vcf/<job>/<settings>')
@@ -236,6 +238,14 @@ def process_vcf(job, settings):
         return flask.redirect(flask.url_for("vcf_result", job=job, settings=settings))
     else: # still in progress
         return flask.render_template('process_vcf.html', job=job, settings=settings, status=status)
+
+@app.route('/job_status/<job>/')
+def job_status(job):
+    status = runner.job_status(RUNNER_DB, job)
+    if status is None:
+        return flask.render_template('main.html', form=flask.request.form)
+    else: # still in progress
+        return flask.jsonify(status)
 
 @app.route('/about')
 def about():

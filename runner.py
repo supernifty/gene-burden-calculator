@@ -48,32 +48,37 @@ def run_queue(db_file):
     
     log('DEBUG', 'checking for jobs to run: done')
 
-def add_to_queue(db_file, job_id, src_file, dest_file):
+def add_to_queue(db_file, job_id, src_file, dest_file, job_size):
     log('DEBUG', 'adding item to queue...')
     db = sqlite3.connect(db_file)
 
     # generate schema if not already present
-    db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char)''')
+    db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char, job_size integer)''')
 
     # add item
-    db.execute('''insert into job (job_id, created, input, output, status) values (?, ?, ?, ?, ?)''', (job_id, datetime.datetime.utcnow(), src_file, dest_file, 'A')) # A = available
+    db.execute('''insert into job (job_id, created, input, output, status, job_size) values (?, ?, ?, ?, ?, ?)''', (job_id, datetime.datetime.utcnow(), src_file, dest_file, 'A', job_size)) # A = available
 
     db.commit()
     log('DEBUG', 'adding item to queue: done')
 
 def job_status(db_file, job_id):
     db = sqlite3.connect(db_file)
-    status = query_db(db, '''select created, started, finished, status from job where job_id = ?''', [job_id], one=True)
+    status = query_db(db, '''select created, started, finished, status, job_size from job where job_id = ?''', [job_id], one=True)
     if status is None:
         return None
     else:
-        return { 'created': status[0], 'started': status[1], 'finished': status[2], 'status': status[3] }
+        queue_size = 0
+        if status[3] == 'A': # queued
+            queued = query_db(db, '''select sum(job_size) from job where created < ? and (status == 'A' or status == 'R')''', [status[0]], one=True)
+            if queued is not None and queued[0] is not None:
+                queue_size = queued[0]
+        return { 'created': status[0], 'started': status[1], 'finished': status[2], 'status': status[3], 'job_size': status[4], 'queue_size': queue_size }
 
 def create(db_file):
     # generate schema if not already present
     db = sqlite3.connect(db_file)
     # generate schema if not already present
-    db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char)''')
+    db.execute('''create table if not exists job (job_id text, created real, started real, finished real, input text, output text, status char, job_size integer)''')
 
 def cleanup(db_file, min_age=12):
     '''
