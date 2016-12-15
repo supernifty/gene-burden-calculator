@@ -61,7 +61,7 @@ def process():
 
     if len(settings['errors']) > 0:
         flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
-    
+
     # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
 
@@ -151,7 +151,7 @@ def process_upload():
     # start processing
     runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
     redirect = flask.redirect(flask.url_for('process_vcf', job=job_id))
-    response = flask.current_app.make_response(redirect)  
+    response = flask.current_app.make_response(redirect)
     response.set_cookie('settings', value=json.dumps(settings))
     return response
 
