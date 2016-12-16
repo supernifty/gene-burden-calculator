@@ -82,7 +82,7 @@ body {
 
     <script>
 TOTAL_JOB_SIZE = {{ status.job_size + status.queue_size }};
-RATE = 10000; // bytes per second
+RATE = 500000; // bytes per second
 
 update_status = function(json) {
   if (json['status'] == 'F') {
