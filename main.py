@@ -170,7 +170,7 @@ def vcf_result(job):
     '''
         redirected to this after annotation has finished
     '''
-    status = runner.job_status(RUNNER_DB, job)
+    status = runner.job_status(RUNNER_DB, job) # ensure it's a real job
     if status is None: # no output
         return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
 
@@ -225,12 +225,37 @@ def vcf_result(job):
         relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
         rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
         warnings = warnings,
-        is_vcf = True
+        is_vcf = True,
+        job = job
     )
 
 @app.route('/gene_result/<job>/<gene>')
 def gene_result(job, gene):
-  pass
+    '''
+        find AF details for a requested gene in a job
+    '''
+    status = runner.job_status(RUNNER_DB, job) # ensure it's a real job
+    if status is None: # no output
+        return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
+
+    skip = 2
+    result = {'x': [], 'y': []}
+    for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
+        if skip > 0: # skip header
+            skip -=1
+            continue
+
+        fields = line.strip('\n').split('\t')
+        if fields[helpers.OUTPUT_FIELDS['gene']] == gene:
+            ac = float(fields[helpers.OUTPUT_FIELDS['allele_count']])
+            an = float(fields[helpers.OUTPUT_FIELDS['allele_number']])
+            exac_ac = float(fields[helpers.OUTPUT_FIELDS['exac_all_pop_ac']])
+            exac_an = float(fields[helpers.OUTPUT_FIELDS['exac_all_pop_an']])
+            if an != 0 and exac_an != 0:
+                result['x'].append( ac / an )
+                result['y'].append( exac_ac / exac_an )
+
+    return flask.jsonify(result)
 
 @app.route('/process_vcf/<job>')
 def process_vcf(job):

@@ -8,10 +8,10 @@
     <title>BurGene</title>
 
     <!-- Bootstrap -->
-    <!-- <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <!-- simplex  -->
     <!-- <link href="https://bootswatch.com/simplex/bootstrap.min.css" rel="stylesheet"> -->
-    <link href="/static/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="/static/bootstrap.min.css" rel="stylesheet"> -->
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -92,7 +92,12 @@
           <tbody>
             {% for item in result %}
             <tr>
-              <td><a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank">{{ item.gene }}</a></td>
+              <td>
+                <a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank">{{ item.gene }}</a> 
+                {% if is_vcf %}
+                  <button onclick="show_graph('{{ item.gene }}')" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span></button>
+                {% endif %}
+              </td>
               <td>{{ item.burden }}</td>
               <td>{{ item.matches }}</td>
               <td>{{ item.protein_length }}</td>
@@ -114,6 +119,24 @@
       <div>
         <p>These results will be stored on the server for up to 7 days. Save the URL in your browser to return to this page.</p>
       </div>
+
+<div class="modal fade bs-example-modal-lg" id="gene_graph_modal" tabindex="-1" role="dialog" aria-labelledby="geneGraphLabel">
+  <div class="modal-dialog  modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="geneGraphLabel">Gene allele frequencies</h4>
+      </div>
+      <div class="modal-body">
+        <div id="gene_graph" style="width:800px;height:450px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
       {% endif %}
 
       <div>
@@ -160,8 +183,39 @@
       };
       Plotly.plot("protein_binomial", data, layout);
     } );
-    </script>
-    <script>
+
+    function show_graph(gene) {
+        $.ajax({ url: "{{ url_for('gene_result', job=job, gene='GENE' ) }}".replace('GENE', gene) })
+           .done(show_graph_data(gene))
+           .fail(show_error);
+    }
+
+    show_graph_data = function(gene) {
+      return function(json) {
+        // prepare graph
+        data = [{
+          x: json['x'],
+          y: json['y'],
+          mode: 'markers',
+          type: 'scatter',
+          marker: { size: 12 } }]
+        layout = {
+          yaxis: { autorange: true, title: 'Case AF' },
+          xaxis: { autorange: true, title: 'ExAC AF' },
+          width: 800,
+          height: 450,
+          title: 'AF for ' + gene
+        };
+        $('#gene_graph_modal').modal()
+        Plotly.purge("gene_graph");
+        Plotly.plot("gene_graph", data, layout);
+      }
+    }
+    
+    function show_error() {
+        alert('Failed to retrieve data');
+    }
+
     function toggler(divId) {
       $("#" + divId).toggle();
     }
