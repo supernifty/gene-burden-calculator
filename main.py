@@ -179,10 +179,12 @@ def vcf_result(job):
     result = []
     warnings = []
     current = [None, 0]
-    first = True
+    skip = 2
     for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
-        if first: # skip header
-            first = False
+        if skip > 0: # skip header
+            if skip == 2:
+                settings['cases'] = int(line.strip())
+            skip -=1
             continue
         fields = line.strip('\n').split('\t')
         if current[0] == fields[0]: # same gene
