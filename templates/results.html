@@ -56,8 +56,8 @@
         <h3>Results</h3>
 
         <div class="alert alert-success" role="alert">
-            Showing results from <strong>{{ cases }} cases</strong> with <strong>{{ filter_type }} &le; {{ filter_value }}</strong> and <strong>{{ cases }} cases</strong>.
-            {% if include_high_impact %}Include variant impact types {% endif %} <strong>{{ include_high_impact }}</strong>.
+            Showing results from <strong>{{ cases }} cases</strong> with <strong>{{ filter_type }} &le; {{ filter_value }}</strong>.
+            {% if include_impacts %}Include variant impact types: {{ include_impact }}.{% endif %}
             Relative to <strong>{{ filter_af_pop }}</strong> populations and MAFs &lt; <strong>{{ filter_af_value }}</strong>
         </div>
 {% if warnings %}
