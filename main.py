@@ -58,7 +58,7 @@ def process():
 
     if len(settings['errors']) > 0:
         flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
-
+    
     # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
 
@@ -104,7 +104,8 @@ def process():
             binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
             relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
             rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
-            warnings = warnings
+            warnings = warnings,
+            is_vcf = False
         )
     else:
         return flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
@@ -143,19 +144,14 @@ def process_upload():
     # looks ok
 
     job_id = generate_id()
-    vcf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)))
+    filename = os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id))
+    vcf_file.save(filename)
+    file_size = os.stat(filename).st_size
 
     # start processing
-    runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)))
-<<<<<<< HEAD
+    runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)), json.dumps(settings), file_size)
     redirect = flask.redirect(flask.url_for('process_vcf', job=job_id))
-    response = flask.current_app.make_response(redirect)
-    response.set_cookie('settings', value=json.dumps(settings))
-=======
-    redirect = flask.redirect(flask.url_for('process_vcf', job=job_id, settings=json.dumps(settings)))
     response = flask.current_app.make_response(redirect)  
-    #response.set_cookie('settings', value=json.dumps(settings))
->>>>>>> 9d96c47aad759c64e030e63981446089dcc4bc49
     return response
 
 ### front end
@@ -169,25 +165,26 @@ def main():
     else:
         return flask.render_template('main.html', form=flask.request.form)
 
-@app.route('/vcf_result/<job>/<settings>/')
-def vcf_result(job, settings):
+@app.route('/vcf_result/<job>')
+def vcf_result(job):
     '''
         redirected to this after annotation has finished
     '''
-    status = runner.job_status(RUNNER_DB, job)
+    status = runner.job_status(RUNNER_DB, job) # ensure it's a real job
     if status is None: # no output
         return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
 
     # determine counts for genes
-    #settings_str = flask.request.cookies.get('settings')
-    settings = json.loads(settings)
+    settings = json.loads(status['settings'])
     result = []
     warnings = []
     current = [None, 0]
-    first = True
+    skip = 2
     for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
-        if first: # skip header
-            first = False
+        if skip > 0: # skip header
+            if skip == 2:
+                settings['cases'] = int(line.strip())
+            skip -=1
             continue
         fields = line.strip('\n').split('\t')
         if current[0] == fields[0]: # same gene
@@ -227,11 +224,41 @@ def vcf_result(job, settings):
         binomial_pvalues = ','.join([ '{0:0.3e}'.format(item['binomial_test']) for item in result if item['protein_length'] is not None]),
         relative_risk = ','.join([ '{0:0.3e}'.format(item['relative_risk']) for item in result if item['protein_length'] is not None]),
         rr_conf_interval = ','.join([ str(item['rr_conf_interval']) for item in result if item['protein_length'] is not None]),
-        warnings = warnings
+        warnings = warnings,
+        is_vcf = True,
+        job = job
     )
 
-@app.route('/process_vcf/<job>/<settings>')
-def process_vcf(job, settings):
+@app.route('/gene_result/<job>/<gene>')
+def gene_result(job, gene):
+    '''
+        find AF details for a requested gene in a job
+    '''
+    status = runner.job_status(RUNNER_DB, job) # ensure it's a real job
+    if status is None: # no output
+        return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
+
+    skip = 2
+    result = {'x': [], 'y': []}
+    for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
+        if skip > 0: # skip header
+            skip -=1
+            continue
+
+        fields = line.strip('\n').split('\t')
+        if fields[helpers.OUTPUT_FIELDS['gene']] == gene:
+            ac = float(fields[helpers.OUTPUT_FIELDS['allele_count']])
+            an = float(fields[helpers.OUTPUT_FIELDS['allele_number']])
+            exac_ac = float(fields[helpers.OUTPUT_FIELDS['exac_all_pop_ac']])
+            exac_an = float(fields[helpers.OUTPUT_FIELDS['exac_all_pop_an']])
+            if an != 0 and exac_an != 0:
+                result['x'].append( ac / an )
+                result['y'].append( exac_ac / exac_an )
+
+    return flask.jsonify(result)
+
+@app.route('/process_vcf/<job>')
+def process_vcf(job):
     '''
         wait for the annotation job to finish by continually checking the job status
     '''
@@ -239,9 +266,17 @@ def process_vcf(job, settings):
     if status is None:
         return flask.render_template('main.html', form=flask.request.form)
     elif status['status'] == 'F': # finished
-        return flask.redirect(flask.url_for("vcf_result", job=job, settings=settings))
+        return flask.redirect(flask.url_for("vcf_result", job=job))
     else: # still in progress
-        return flask.render_template('process_vcf.html', job=job, settings=settings, status=status)
+        return flask.render_template('process_vcf.html', job=job, status=status)
+
+@app.route('/job_status/<job>/')
+def job_status(job):
+    status = runner.job_status(RUNNER_DB, job)
+    if status is None:
+        return flask.render_template('main.html', form=flask.request.form)
+    else: # still in progress
+        return flask.jsonify(status)
 
 @app.route('/about')
 def about():

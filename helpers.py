@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 def parse_settings(form):
     result = {'errors': []}
@@ -81,7 +82,7 @@ def get_vcf_match(fields, settings):
             if float(fields[OUTPUT_FIELDS[pop_value]]) >= float(settings['filter_af_value']): # field must be less for each pop
                 return 0
 
-    return 1
+    return int(fields[OUTPUT_FIELDS['allele_count']])
 
 def get_exac_detail(query_db, gene, settings):
     sql_parameters = [gene, settings['filter_value']]
@@ -104,7 +105,7 @@ def get_exac_detail(query_db, gene, settings):
             sql_parameters.append(settings['filter_af_value'])
 
     # find matching genes
-    query = "select count(*), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? or exac.{} is null) {} {}".format(
+    query = "select sum(allele_count), protein_length from exac left join protein_length on exac.gene=protein_length.gene where exac.gene=? and (exac.{} >= ? or exac.{} is null) {} {}".format(
             settings['filter_type'],
             settings['filter_type'],
             additional_filter,

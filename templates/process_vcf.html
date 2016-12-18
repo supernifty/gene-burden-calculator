@@ -61,7 +61,9 @@ body {
         </div>
         {% endif %}
 
-        <div>Your upload is being processed. Your job ID is <strong>{{ job }}</strong>.
+        <div>Your upload is being processed. Your job ID is <strong>{{ job }}</strong>.</div>
+
+        <div id="status">
           Status is <strong>{% if status.status == 'A' %}queued{% elif status.status == 'R' %}running{% elif status.status == 'F' %}complete{% else %}{{ status }}{% endif %}</strong>.
         </div>
 
@@ -79,15 +81,41 @@ body {
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <script>
-      $('#prepopulate_btn').on('click', function (e) {
-        $('#filter_type').val('condel');
-        $('#filter_value').val('0.5');
-        $('#cases').val('100');
-        $('#filter_af_pop').val('exac_all');
-        $('#filter_af_value').val('0.001');
-        $('#filter_option_high_impact').attr("checked", true);
-        $('#burdens').val('ADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
-      })
+TOTAL_JOB_SIZE = {{ status.job_size + status.queue_size }};
+RATE = 500000; // bytes per second
+
+update_status = function(json) {
+  if (json['status'] == 'F') {
+    $('#status').html('Your job has <strong>finished processing</strong>.');
+    location.reload();
+  }
+  else if (json['status'] == 'A') {
+    $('#status').html('Your job is <strong>queued</strong>. Estimated queue time: <strong>' + Math.floor( json['queue_size'] / RATE ) + 's</strong>' );
+  }
+  else if (json['status'] == 'R') {
+    $('#status').html('Your job is <strong>running</strong>. Estimated run time: <strong>' + Math.floor( json['job_size'] / RATE ) + 's</strong>' );
+  }
+  else {
+    $('#status').html('Unexpected job status ' + json['status']);
+  }
+  setTimeout(refresh_data, 5000);
+}
+
+refresh_data = function() {
+  $.ajax({
+    url: "{{ url_for('job_status', job=job) }}"
+  })
+  .done(update_status)
+  .fail(show_error);
+}
+
+show_error = function() {
+  $('status').html('Failed to update status. Please try refreshing or try again later.')
+}
+
+$(document).ready(function () {
+  refresh_data();
+});
     </script>
   </body>
 </html>
