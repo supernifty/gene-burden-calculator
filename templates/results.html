@@ -190,15 +190,46 @@
            .fail(show_error);
     }
 
+    function pass_to_text(bools) {
+        result = []
+        for (idx = 0; idx < bools.length; ++idx) {
+            if (bools[idx]) {
+                result.push('passed filtering');
+            }
+            else {
+                result.push('filtered');
+            }
+        }
+        return result;
+    }
+
+    function pass_to_color(bools) {
+        result = []
+        for (idx = 0; idx < bools.length; ++idx) {
+            if (bools[idx]) {
+                result.push('#00cc00');
+            }
+            else {
+                result.push('#cc0000');
+            }
+        }
+        return result;
+    }
+
     show_graph_data = function(gene) {
       return function(json) {
         // prepare graph
         data = [{
           x: json['x'],
           y: json['y'],
+          text: pass_to_text(json['pass']),
           mode: 'markers',
           type: 'scatter',
-          marker: { size: 12 } }]
+          marker: { 
+            size: 12,
+            color: pass_to_color(json['pass'])
+          } 
+        }];
         layout = {
           yaxis: { autorange: true, title: 'Case AF' },
           xaxis: { autorange: true, title: 'ExAC AF' },

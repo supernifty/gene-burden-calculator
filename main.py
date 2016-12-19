@@ -242,7 +242,7 @@ def gene_result(job, gene):
     # determine counts for genes
     settings = json.loads(status['settings'])
 
-    result = {'x': [], 'y': []}
+    result = {'x': [], 'y': [], 'pass': []}
     for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
         if skip > 0: # skip header
             if skip == 2:
