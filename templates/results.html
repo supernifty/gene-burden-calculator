@@ -175,7 +175,7 @@
         mode: 'markers',
         type: 'scatter',
         text: [ {{ gene_list|safe }} ],
-        marker: { size: 12 } }]
+        marker: { size: 8 } }]
       layout = {
         yaxis: { type: 'log', autorange: true, title: 'p-value', tickformat: '.0e', hoverformat: '.3e' },
         xaxis: { type: 'log', autorange: true, title: 'Protein Length' },
@@ -226,7 +226,7 @@
           mode: 'markers',
           type: 'scatter',
           marker: { 
-            size: 12,
+            size: 8,
             color: pass_to_color(json['pass'])
           } 
         }];

@@ -263,7 +263,7 @@ def gene_result(job, gene):
                 else:
                     result['x'].append( 0 )
                 result['pass'].append( helpers.get_vcf_match(fields, settings)>0)
-                result['text'].append(fields[helpers.OUTPUT_FIELDS['impact_type']])
+                result['text'].append('AC={} {}'.format(fields[helpers.OUTPUT_FIELDS['allele_count']], fields[helpers.OUTPUT_FIELDS['impact_type']]))
 
     return flask.jsonify(result)
 
