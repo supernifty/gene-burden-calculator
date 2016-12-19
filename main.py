@@ -242,7 +242,7 @@ def gene_result(job, gene):
     # determine counts for genes
     settings = json.loads(status['settings'])
 
-    result = {'x': [], 'y': [], 'pass': []}
+    result = {'x': [], 'y': [], 'pass': [], 'text': []}
     for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
         if skip > 0: # skip header
             if skip == 2:
@@ -256,10 +256,14 @@ def gene_result(job, gene):
             an = float(fields[helpers.OUTPUT_FIELDS['allele_number']])
             exac_ac = float(fields[helpers.OUTPUT_FIELDS['exac_all_pop_ac']])
             exac_an = float(fields[helpers.OUTPUT_FIELDS['exac_all_pop_an']])
-            if an != 0 and exac_an != 0:
-                result['x'].append( ac / an )
-                result['y'].append( exac_ac / exac_an )
+            if an != 0:
+                result['y'].append( ac / an )
+                if exac_an != 0:
+                    result['x'].append( exac_ac / exac_an )
+                else:
+                    result['x'].append( 0 )
                 result['pass'].append( helpers.get_vcf_match(fields, settings)>0)
+                result['text'].append(fields[helpers.OUTPUT_FIELDS['impact_type']])
 
     return flask.jsonify(result)
 
