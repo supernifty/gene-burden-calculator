@@ -58,7 +58,7 @@ def process():
 
     if len(settings['errors']) > 0:
         flask.render_template('main.html', errors=settings['errors'], form=flask.request.form)
-    
+
     # input variants per gene count
     burdens = flask.request.form['burdens'].split('\n')
 
@@ -151,7 +151,7 @@ def process_upload():
     # start processing
     runner.add_to_queue(RUNNER_DB, job_id, os.path.join(app.config['UPLOAD_FOLDER'], '{}.vcf'.format(job_id)), os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job_id)), json.dumps(settings), file_size)
     redirect = flask.redirect(flask.url_for('process_vcf', job=job_id))
-    response = flask.current_app.make_response(redirect)  
+    response = flask.current_app.make_response(redirect)
     return response
 
 ### front end
@@ -239,9 +239,14 @@ def gene_result(job, gene):
         return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
 
     skip = 2
+    # determine counts for genes
+    settings = json.loads(status['settings'])
+
     result = {'x': [], 'y': []}
     for line in open(os.path.join(app.config['UPLOAD_FOLDER'], '{}.out'.format(job)), 'r'):
         if skip > 0: # skip header
+            if skip == 2:
+                cases = float(line.strip())
             skip -=1
             continue
 
@@ -254,6 +259,7 @@ def gene_result(job, gene):
             if an != 0 and exac_an != 0:
                 result['x'].append( ac / an )
                 result['y'].append( exac_ac / exac_an )
+                result['pass'].append( helpers.get_vcf_match(fields, settings)>0)
 
     return flask.jsonify(result)
 
