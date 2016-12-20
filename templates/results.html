@@ -207,10 +207,12 @@
         result = []
         for (idx = 0; idx < bools.length; ++idx) {
             if (bools[idx]) {
-                result.push('#00cc00');
+                //result.push('#00cc00');
+                result.push('rgba(251, 180, 174, .8)');
             }
             else {
-                result.push('#cc0000');
+                //result.push('#cc0000');
+                result.push('rgba(179, 205, 227, 0.8)');
             }
         }
         return result;
@@ -227,8 +229,12 @@
           type: 'scatter',
           marker: { 
             size: 8,
-            color: pass_to_color(json['pass'])
-          } 
+            color: pass_to_color(json['pass']),
+            line : { 
+                color : 'black',
+                width : 1
+            }
+          }
         }];
         layout = {
           yaxis: { autorange: true, title: 'Case AF' },
