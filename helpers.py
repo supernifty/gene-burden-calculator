@@ -4,7 +4,7 @@ def parse_settings(form):
     result = {'errors': []}
 
     # case count
-    if form['analysis_type'] == 'count':
+    if form['analysis_type'] == 'counts':
         try:
             result['cases'] = int(form['cases'])
             if result['cases'] <= 0:
