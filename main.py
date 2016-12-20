@@ -50,10 +50,10 @@ def process():
     '''
 
     # is it the vcf?
-    if flask.request.files['vcf'] is not None and flask.request.files['vcf'].filename is not None and flask.request.files['vcf'].filename != '':
+    if flask.request.form['analysis_type'] == 'vcf' and flask.request.files['vcf'] is not None and flask.request.files['vcf'].filename is not None and flask.request.files['vcf'].filename != '':
         return process_upload()
 
-    # it's the csv
+    # try the csv
     settings = helpers.parse_settings(flask.request.form)
 
     if len(settings['errors']) > 0:

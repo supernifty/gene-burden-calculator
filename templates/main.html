@@ -8,10 +8,10 @@
     <title>BurGene</title>
 
     <!-- Bootstrap -->
-    <!-- <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <!-- simplex  -->
     <!-- <link href="https://bootswatch.com/simplex/bootstrap.min.css" rel="stylesheet"> -->
-    <link href="/static/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="/static/bootstrap.min.css" rel="stylesheet"> -->
     <!-- Bootstrap-picker -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/css/bootstrap-select.min.css">
     <!-- <link rel="stylesheet" href="https://bootswatch.com/simplex/bootstrap.css"> -->
@@ -59,7 +59,6 @@
     <div class="container">
 
       <div>
-        <h3>Configuration</h3>
         {% if errors %}
         <div class="alert alert-danger">
           <ul>
@@ -71,10 +70,26 @@
         {% endif %}
 
         <form id="burgeneForm" method="POST" action="/" enctype="multipart/form-data">
+
+          <ul id="main_tab" class="nav nav-tabs">
+            <li role="presentation" class="active" data-toggle="tab"><a href="#vcf" data-toggle="tab">Upload VCF</a></li>
+            <li role="presentation" data-toggle="tab"><a href="#counts" data-toggle="tab">Specify genes and counts</a></li>
+          </ul>
+
           <div class="row">
             <div class="form-group col-lg-4">
-              <label for="cases" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter number of cases (samples) in your study">Number of cases</label>
-              <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
+              <div id="main_tab_content" class="tab-content">
+                <div role="tabpanel" class="tab-pane fade in active" id="vcf">
+                  <label for="upload">Upload a VCF file</label>
+                  <input type="file" name="vcf" id="upload">
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="counts">
+                  <label for="burdens" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">Enter genes and variant counts</label>
+                  <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
+                  <label for="cases" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter number of cases (samples) in your study">Number of cases</label>
+                  <input name="cases" type="text" class="form-control" id="cases" placeholder="Value" value="{{ form.cases }}">
+                </div>
+              </div>
             </div>
           </div>
 
@@ -123,19 +138,7 @@
             </div>
           </div>
 
-          <div class="row">
-            <div class="form-group col-lg-12">
-              <label for="burdens" class="control-label" data-toggle="tooltip" data-placement="top" title="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">Cases: genes and variants</label>
-              <textarea id="burdens" name="burdens" class="form-control" rows="5" placeholder="Enter each gene and its burden separated by a comma, one per line. For example 'TPTE,12'.">{{ form.burdens }}</textarea>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="form-group col-lg-12">
-              <label for="upload">Upload VCF File</label>
-              <input type="file" name="vcf" id="upload">
-            </div>
-          </div>
+          <input type="hidden" name="analysis_type" id="analysis_type" value="{{ form.analysis_type|default('vcf') }}"/>
 
           <div class="row">
             <div class="form-group col-lg-12">
@@ -176,6 +179,8 @@
         // $('#missense_variant').prop("checked", true);
         $('#missense_variant').val('missense_variant').prop("checked", true);
         $('#burdens').val('TTN,100\nADAMTS1,2\nCSTB,5\nDYRK1A,3\nERG,2\nETS2,1\nMIR125B2,1\nNRIP1,3\nOLIG2,2\nPTTG1IP,1\nRUNX1,1\nS100B,2\nTFF1,6\nTFF2,4\nTFF3,5\nTIAM1,1\nTMPRSS2,1\nTMPRSS3,2');
+        $('#main_tab a[href="#counts"]').tab('show');
+        $('#analysis_type').attr("value", "counts");
       })
     </script>
     <script>
@@ -186,6 +191,12 @@
     <script>
       $(document).ready(function(){
         $('[data-toggle="tooltip"]').tooltip( { placement: 'right' } );
+        $('#main_tab a').click(function(e) {
+          e.preventDefault();
+          $('#analysis_type').attr("value", $(e.target).attr("href").substr(1));
+          $(this).tab('show');
+        });
+        $('#main_tab a[href="#{{ form.analysis_type|default('vcf') }}"]').tab('show');
       })
     </script>
   </body>

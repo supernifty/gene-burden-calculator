@@ -4,12 +4,13 @@ def parse_settings(form):
     result = {'errors': []}
 
     # case count
-    try:
-        result['cases'] = int(form['cases'])
-        if result['cases'] <= 0:
-            result['errors'].append('Number of cases must be greater than zero')
-    except ValueError:
-            result['errors'].append('Number of cases must be numeric')
+    if form['analysis_type'] == 'count':
+        try:
+            result['cases'] = int(form['cases'])
+            if result['cases'] <= 0:
+                result['errors'].append('Number of cases must be greater than zero')
+        except ValueError:
+                result['errors'].append('Number of cases must be numeric')
 
     # parse overall settings - filtering
     result['filter_type'] = form['filter_type']
