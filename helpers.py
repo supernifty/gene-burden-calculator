@@ -89,14 +89,15 @@ def get_exac_detail(query_db, gene, settings):
     sql_parameters = [gene, settings['filter_value']]
 
     # impact filter
-    additional_filter = " and ("
+    additional_filter = ""
     if len(settings['include_impacts']) > 0:
+        additional_filter = " and ("
         for impact in settings['include_impacts'][:-1]:
             additional_filter += (" impact = ? or ")
             sql_parameters.append(impact)
         additional_filter += (" impact = ? ")
         sql_parameters.append(settings['include_impacts'][-1])
-    additional_filter += ")"
+        additional_filter += ")"
 
     # population filter for a list of selected populations
     population_filter = ''

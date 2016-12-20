@@ -57,7 +57,7 @@
 
         <div class="alert alert-success" role="alert">
             Showing results from <strong>{{ cases }} cases</strong> with <strong>{{ filter_type }} &le; {{ filter_value }}</strong>.
-            {% if include_impacts %}Include variant impact types: {{ include_impact }}.{% endif %}
+            {% if include_impacts %}Include variant impact types: <strong>{{ include_impacts|default("All") }}</strong>.{% endif %}
             Relative to <strong>{{ filter_af_pop }}</strong> populations and MAFs &lt; <strong>{{ filter_af_value }}</strong>
         </div>
 {% if warnings %}
@@ -93,10 +93,10 @@
             {% for item in result %}
             <tr>
               <td>
-                <a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank">{{ item.gene }}</a> 
                 {% if is_vcf %}
                   <button onclick="show_graph('{{ item.gene }}')" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span></button>
                 {% endif %}
+                <a href="http://www.genenames.org/cgi-bin/gene_symbol_report?match={{ item.gene }}" target="_blank">{{ item.gene }}</a> 
               </td>
               <td>{{ item.burden }}</td>
               <td>{{ item.matches }}</td>
