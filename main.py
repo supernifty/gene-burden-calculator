@@ -274,7 +274,7 @@ def process_vcf(job):
     '''
     status = runner.job_status(RUNNER_DB, job)
     if status is None:
-        return flask.render_template('main.html', form=flask.request.form)
+        return flask.render_template('main.html', errors=['Job not found'], form=flask.request.form)
     elif status['status'] == 'F': # finished
         return flask.redirect(flask.url_for("vcf_result", job=job))
     else: # still in progress

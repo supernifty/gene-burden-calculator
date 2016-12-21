@@ -61,7 +61,7 @@ body {
         </div>
         {% endif %}
 
-        <div>Your upload is being processed. Your job ID is <strong>{{ job }}</strong>.</div>
+        <div>Your upload is being processed. Results will be available at <a href="{{ url_for('process_vcf', job=job }}">{{ job }}</a>.</div>
 
         <div id="status">
           Status is <strong>{% if status.status == 'A' %}queued{% elif status.status == 'R' %}running{% elif status.status == 'F' %}complete{% else %}{{ status }}{% endif %}</strong>.
