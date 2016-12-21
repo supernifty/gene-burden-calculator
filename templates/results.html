@@ -58,7 +58,7 @@
         <div class="alert alert-success" role="alert">
             Showing results from <strong>{{ cases }} cases</strong> with <strong>{{ filter_type }} &le; {{ filter_value }}</strong>.
             {% if include_impacts %}Include variant impact types: <strong>{{ include_impacts|default("All") }}</strong>.{% endif %}
-            Relative to <strong>{{ filter_af_pop }}</strong> populations and MAFs &lt; <strong>{{ filter_af_value }}</strong>
+            Relative to <strong>{{ filter_af_pop }}</strong> populations and allele frequencies &lt; <strong>{{ filter_af_value }}</strong>
         </div>
 {% if warnings %}
       <div class = "alert alert-warning">
@@ -237,11 +237,11 @@
           }
         }];
         layout = {
-          yaxis: { autorange: true, title: 'Case AF' },
-          xaxis: { autorange: true, title: 'ExAC AF' },
+          yaxis: { autorange: true, title: 'Case Allele Frequency },
+          xaxis: { autorange: true, title: 'ExAC Allele Frequency' },
           width: 800,
           height: 450,
-          title: 'AF for ' + gene,
+          title: 'Allele Frequency for ' + gene,
           hovermode: 'closest'
         };
         $('#gene_graph_modal').modal()
