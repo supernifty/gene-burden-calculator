@@ -89,9 +89,9 @@ def cleanup(db_file, min_age=12):
     log('DEBUG', 'finding files older than {}...'.format(required))
     removed = 0
     db = sqlite3.connect(db_file)
-    files = query_db(db, '''select rowid, input, output from job where status = "F"''', [], one=False)
+    files = query_db(db, '''select rowid, input, output, job_id from job where status = "F"''', [], one=False)
     for candidates in files:
-        if os.path.exists(candidates[1]) and 'example' not in candidates[1]:
+        if os.path.exists(candidates[1]) and 'example' not in candidates[3]:
             modified = os.path.getmtime(candidates[1])
             if modified < required:
                 log('INFO', 'removing {}...'.format(candidates[1]))
