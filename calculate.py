@@ -21,6 +21,8 @@ import numpy as np
 
 # get confidence interval for relative risk calculation at 95%
 def get_confidence_interval(rr, se):
+    if rr == 0:
+        rr = 1e-10
     low_ci = round(np.exp(np.log(rr) - 1.96 * se), 2)
     up_ci = round(np.exp(np.log(rr) + 1.96 * se), 2)
     return (low_ci, up_ci)
@@ -63,7 +65,7 @@ def calculate_burden_statistics(case_burden, total_cases, population_burden, tot
     binomial_p_value = statsmodels.stats.proportion.binom_test([case_burden, total_cases], None, prop=population_proportion, alternative="two-sided")
 
     # calculate relative risk and associated confdence interval
-    relative_risk = (case_burden/(case_burden+total_cases))/(population_burden/(population_burden+total_population))
+    relative_risk = (1.0 * case_burden / (case_burden + total_cases)) / (1.0 * population_burden/(population_burden+total_population))
     standard_error = np.sqrt((1.0/case_burden) + (1.0/population_burden) - (1.0/(case_burden+total_cases)) - (1.0/(population_burden+total_population)))
     rr_conf_interval = get_confidence_interval(relative_risk, standard_error)
 

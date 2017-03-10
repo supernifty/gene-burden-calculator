@@ -13,8 +13,8 @@ import calculate
 import helpers
 import runner
 
-DB = "./exac.db"
-RUNNER_DB = "./runner.db"
+DB = "./assets/exac.db"
+RUNNER_DB = "./assets/runner.db"
 
 EXAC_POPULATION = 53105.0
 UPLOAD_FOLDER = './uploads'
