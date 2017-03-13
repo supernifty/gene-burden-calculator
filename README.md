@@ -11,7 +11,7 @@ python app.py
 
 # Running from Docker
 
-Download and extract the asset bundle (approx 58GB) from https://swift.rc.nectar.org.au:8888/v1/AUTH_24376b6176a5466b9f20bee02ee1f182/burgene-assets-170310.tgz
+* Download and extract the asset bundle (approx 58GB) from https://swift.rc.nectar.org.au:8888/v1/AUTH_24376b6176a5466b9f20bee02ee1f182/burgene-assets-170310.tgz
 
 ```
 docker run -d -p 5000:5000 -v /mnt/work/burgene-assets/:/app/assets/ burgene:latest
@@ -21,6 +21,14 @@ Replace "/mnt/work/burgene-assets" with the location of your extracted asset bun
 
 Browse to http://127.0.0.1:5000/
 
+# Dependencies
+
+* CADD
+* ExAC
+* fannsDB
+* vcfanno
+* VEP
+* snpEff
 
 # Building the app and assets
 You only need to continue reading if you are interested in building the app.
